@@ -42,8 +42,10 @@ class DrawingBoard {
         const dpr = window.devicePixelRatio || 1;
         
         // Save current canvas state before resize
+        const oldWidth = this.canvas.width;
+        const oldHeight = this.canvas.height;
         const imageData = this.historyStep >= 0 ? 
-            this.ctx.getImageData(0, 0, this.canvas.width, this.canvas.height) : null;
+            this.ctx.getImageData(0, 0, oldWidth, oldHeight) : null;
         
         // Set canvas size
         this.canvas.width = rect.width * dpr;
@@ -189,13 +191,15 @@ class DrawingBoard {
     renderStroke() {
         if (this.points.length < 2) return;
         
-        // Apply stroke smoothing using quadratic curves
         const points = this.points;
         
         if (points.length >= 3) {
+            // Use single path for better performance
+            this.ctx.beginPath();
+            this.ctx.moveTo(points[0].x, points[0].y);
+            
             // Draw smooth curve through points
             for (let i = 1; i < points.length - 1; i++) {
-                const start = points[i - 1];
                 const control = points[i];
                 const end = points[i + 1];
                 
@@ -203,11 +207,13 @@ class DrawingBoard {
                 const midX = (control.x + end.x) / 2;
                 const midY = (control.y + end.y) / 2;
                 
-                this.ctx.beginPath();
-                this.ctx.moveTo(start.x, start.y);
                 this.ctx.quadraticCurveTo(control.x, control.y, midX, midY);
-                this.ctx.stroke();
             }
+            
+            // Draw to the last point
+            const lastPoint = points[points.length - 1];
+            this.ctx.lineTo(lastPoint.x, lastPoint.y);
+            this.ctx.stroke();
         } else {
             // Draw straight line for first segment
             const start = points[points.length - 2];
@@ -271,7 +277,7 @@ class DrawingBoard {
     }
     
     confirmClear() {
-        if (confirm('确定要清空画布吗？此操作不可撤销。')) {
+        if (confirm('确定要清空画布吗？')) {
             this.clearCanvas(true);
         }
     }
