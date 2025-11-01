@@ -91,18 +91,12 @@ class DrawingBoard {
         });
         
         this.canvas.addEventListener('mouseup', () => {
-            if (this.drawingEngine.stopDrawing()) {
-                this.historyManager.saveState();
-                this.closeConfigPanel();
-            }
+            this.handleDrawingComplete();
             this.drawingEngine.stopPanning();
         });
         
         this.canvas.addEventListener('mouseout', () => {
-            if (this.drawingEngine.stopDrawing()) {
-                this.historyManager.saveState();
-                this.closeConfigPanel();
-            }
+            this.handleDrawingComplete();
             this.drawingEngine.stopPanning();
             this.hideEraserCursor();
         });
@@ -126,10 +120,7 @@ class DrawingBoard {
         
         this.canvas.addEventListener('touchend', (e) => {
             e.preventDefault();
-            if (this.drawingEngine.stopDrawing()) {
-                this.historyManager.saveState();
-                this.closeConfigPanel();
-            }
+            this.handleDrawingComplete();
         }, { passive: false });
         
         // Toolbar buttons
@@ -154,7 +145,7 @@ class DrawingBoard {
             }
         });
         
-        // More event listeners follow...
+        // Setup additional event listeners for tools, settings, and keyboard
         this.setupToolConfigListeners();
         this.setupSettingsListeners();
         this.setupKeyboardShortcuts();
@@ -408,6 +399,13 @@ class DrawingBoard {
         
         if (tool === 'pen' || tool === 'eraser' || tool === 'background') {
             document.getElementById('config-area').classList.add('show');
+        }
+    }
+    
+    handleDrawingComplete() {
+        if (this.drawingEngine.stopDrawing()) {
+            this.historyManager.saveState();
+            this.closeConfigPanel();
         }
     }
     

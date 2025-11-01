@@ -27,10 +27,11 @@ class SettingsManager {
         const toolbar = document.getElementById('toolbar');
         const buttons = toolbar.querySelectorAll('.tool-btn');
         
-        const PADDING_VERTICAL_RATIO = 5;
-        const PADDING_HORIZONTAL_RATIO = 3;
-        const SVG_SIZE_RATIO = 2;
-        const FONT_SIZE_RATIO = 4.5;
+        // Size ratios for responsive toolbar scaling
+        const PADDING_VERTICAL_RATIO = 5;    // Vertical padding = toolbarSize / 5
+        const PADDING_HORIZONTAL_RATIO = 3;  // Horizontal padding = toolbarSize / 3
+        const SVG_SIZE_RATIO = 2;            // Icon size = toolbarSize / 2
+        const FONT_SIZE_RATIO = 4.5;         // Font size = toolbarSize / 4.5
         
         buttons.forEach(btn => {
             btn.style.padding = `${this.toolbarSize / PADDING_VERTICAL_RATIO}px ${this.toolbarSize / PADDING_HORIZONTAL_RATIO}px`;
