@@ -605,6 +605,9 @@ class DrawingBoard {
             
             // Save state after drawing
             this.saveState();
+            
+            // Auto-close config panel after drawing
+            this.closeConfigPanel();
         }
     }
     
@@ -635,6 +638,11 @@ class DrawingBoard {
             this.hideEraserCursor();
         }
         this.updateUI();
+        
+        // Show config panel when tool button is clicked (for pen, eraser, background)
+        if (tool === 'pen' || tool === 'eraser' || tool === 'background') {
+            document.getElementById('config-area').classList.add('show');
+        }
     }
     
     closeConfigPanel() {
@@ -704,20 +712,18 @@ class DrawingBoard {
             panel.classList.remove('active');
         });
         
+        // Update active tool button and prepare the correct config panel (but don't auto-show)
         if (this.currentTool === 'pen') {
             document.getElementById('pen-btn').classList.add('active');
             document.getElementById('pen-config').classList.add('active');
-            configArea.classList.add('show');
             this.canvas.style.cursor = 'crosshair';
         } else if (this.currentTool === 'eraser') {
             document.getElementById('eraser-btn').classList.add('active');
             document.getElementById('eraser-config').classList.add('active');
-            configArea.classList.add('show');
             this.canvas.style.cursor = 'pointer';
         } else if (this.currentTool === 'background') {
             document.getElementById('background-btn').classList.add('active');
             document.getElementById('background-config').classList.add('active');
-            configArea.classList.add('show');
             this.canvas.style.cursor = 'default';
         } else {
             // For other tools, hide config area
