@@ -22,6 +22,7 @@ class DrawingBoard {
         this.currentTool = 'pen';
         this.currentColor = '#000000';
         this.penSize = 5;
+        this.penType = localStorage.getItem('penType') || 'normal';
         this.eraserSize = 20;
         
         // Background settings
@@ -168,6 +169,16 @@ class DrawingBoard {
         
         // Config close button
         document.getElementById('config-close-btn').addEventListener('click', () => this.closeConfigPanel());
+        
+        // Pen type buttons
+        document.querySelectorAll('.pen-type-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                this.penType = e.target.dataset.penType;
+                document.querySelectorAll('.pen-type-btn').forEach(b => b.classList.remove('active'));
+                e.target.classList.add('active');
+                localStorage.setItem('penType', this.penType);
+            });
+        });
         
         // Color picker
         document.querySelectorAll('.color-btn[data-color]').forEach(btn => {
@@ -516,10 +527,42 @@ class DrawingBoard {
             this.ctx.globalCompositeOperation = 'source-over';
             this.ctx.strokeStyle = this.currentColor;
             this.ctx.lineWidth = this.penSize;
+            
+            // Apply pen type specific styles
+            switch(this.penType) {
+                case 'pencil':
+                    // Pencil: slightly transparent with rough edges
+                    this.ctx.globalAlpha = 0.7;
+                    this.ctx.lineCap = 'round';
+                    break;
+                case 'ballpoint':
+                    // Ballpoint: smooth and consistent
+                    this.ctx.globalAlpha = 0.9;
+                    this.ctx.lineCap = 'round';
+                    break;
+                case 'fountain':
+                    // Fountain pen: variable width effect
+                    this.ctx.globalAlpha = 1.0;
+                    this.ctx.lineCap = 'round';
+                    break;
+                case 'brush':
+                    // Brush: softer edges
+                    this.ctx.globalAlpha = 0.85;
+                    this.ctx.lineCap = 'round';
+                    this.ctx.lineWidth = this.penSize * 1.5; // Brush is thicker
+                    break;
+                case 'normal':
+                default:
+                    // Normal pen: solid and smooth
+                    this.ctx.globalAlpha = 1.0;
+                    this.ctx.lineCap = 'round';
+                    break;
+            }
         } else if (this.currentTool === 'eraser') {
             this.ctx.globalCompositeOperation = 'destination-out';
             this.ctx.strokeStyle = 'rgba(0,0,0,1)'; // Eraser needs a stroke style
             this.ctx.lineWidth = this.eraserSize;
+            this.ctx.globalAlpha = 1.0;
         }
     }
     
@@ -610,6 +653,14 @@ class DrawingBoard {
         
         // Load infinite canvas setting
         document.getElementById('infinite-canvas-checkbox').checked = this.infiniteCanvas;
+        
+        // Load pen type setting
+        document.querySelectorAll('.pen-type-btn').forEach(btn => {
+            btn.classList.remove('active');
+            if (btn.dataset.penType === this.penType) {
+                btn.classList.add('active');
+            }
+        });
         
         // Load background settings
         document.getElementById('bg-opacity-slider').value = Math.round(this.bgOpacity * 100);
@@ -1164,7 +1215,25 @@ class DrawingBoard {
         document.getElementById('page-input').value = this.currentPage;
         document.getElementById('page-total').textContent = `/ ${this.pages.length}`;
         document.getElementById('prev-page-btn').disabled = this.currentPage <= 1;
-        // Next button is never disabled - can always create new page
+        
+        // Show "+" icon in next button when on last page
+        const nextBtn = document.getElementById('next-page-btn');
+        if (this.currentPage >= this.pages.length) {
+            nextBtn.innerHTML = `
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="12" y1="5" x2="12" y2="19"></line>
+                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                </svg>
+            `;
+            nextBtn.title = '新建页面';
+        } else {
+            nextBtn.innerHTML = `
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="9 18 15 12 9 6"></polyline>
+                </svg>
+            `;
+            nextBtn.title = '下一页';
+        }
     }
     
     prevPage() {
