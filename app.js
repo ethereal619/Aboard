@@ -18,7 +18,18 @@ class DrawingBoard {
         this.eraserSize = 20;
         
         // UI settings
-        this.buttonSize = localStorage.getItem('buttonSize') || 'medium';
+        this.toolbarSize = parseInt(localStorage.getItem('toolbarSize')) || 50;
+        this.controlPosition = localStorage.getItem('controlPosition') || 'top-right';
+        this.edgeSnapEnabled = localStorage.getItem('edgeSnapEnabled') !== 'false';
+        this.canvasScale = parseFloat(localStorage.getItem('canvasScale')) || 1.0;
+        this.edgeSnapDistance = 20; // Distance in pixels for edge snapping
+        
+        // Dragging state
+        this.isDraggingPanel = false;
+        this.draggedElement = null;
+        this.dragOffset = { x: 0, y: 0 };
+        this.draggedElementWidth = 0;
+        this.draggedElementHeight = 0;
         
         // History management for undo/redo
         this.history = [];
@@ -35,10 +46,6 @@ class DrawingBoard {
         this.loadSettings();
         this.updateUI();
         this.saveState();
-        
-        // Performance optimization
-        this.rafId = null;
-        this.pendingDraw = false;
     }
     
     resizeCanvas() {
@@ -126,17 +133,37 @@ class DrawingBoard {
             eraserSizeValue.textContent = this.eraserSize;
         });
         
-        // History buttons
+        // History and zoom buttons
         document.getElementById('undo-btn').addEventListener('click', () => this.undo());
         document.getElementById('redo-btn').addEventListener('click', () => this.redo());
+        document.getElementById('zoom-in-btn').addEventListener('click', () => this.zoomIn());
+        document.getElementById('zoom-out-btn').addEventListener('click', () => this.zoomOut());
+        document.getElementById('zoom-reset-btn').addEventListener('click', () => this.zoomReset());
         
         // Settings modal
         document.getElementById('settings-close-btn').addEventListener('click', () => this.closeSettings());
-        document.querySelectorAll('.size-option-btn').forEach(btn => {
+        
+        // Toolbar size slider
+        const toolbarSizeSlider = document.getElementById('toolbar-size-slider');
+        const toolbarSizeValue = document.getElementById('toolbar-size-value');
+        toolbarSizeSlider.addEventListener('input', (e) => {
+            this.toolbarSize = parseInt(e.target.value);
+            toolbarSizeValue.textContent = this.toolbarSize;
+            this.updateToolbarSize();
+        });
+        
+        // Control position buttons
+        document.querySelectorAll('.position-option-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
-                const size = e.target.dataset.size;
-                this.setButtonSize(size);
+                const position = e.target.dataset.position;
+                this.setControlPosition(position);
             });
+        });
+        
+        // Edge snap checkbox
+        document.getElementById('edge-snap-checkbox').addEventListener('change', (e) => {
+            this.edgeSnapEnabled = e.target.checked;
+            localStorage.setItem('edgeSnapEnabled', this.edgeSnapEnabled);
         });
         
         // Close modal when clicking outside
@@ -157,6 +184,17 @@ class DrawingBoard {
                     this.redo();
                 }
             }
+            // Zoom shortcuts
+            if (e.key === '+' || e.key === '=') {
+                e.preventDefault();
+                this.zoomIn();
+            } else if (e.key === '-' || e.key === '_') {
+                e.preventDefault();
+                this.zoomOut();
+            } else if (e.key === '0') {
+                e.preventDefault();
+                this.zoomReset();
+            }
             // Escape key to close modals
             if (e.key === 'Escape') {
                 this.closeSettings();
@@ -164,15 +202,19 @@ class DrawingBoard {
             }
         });
         
+        // Draggable panels
+        this.setupDraggablePanels();
+        
         // Window resize
         window.addEventListener('resize', () => this.resizeCanvas());
     }
     
     getPosition(e) {
         const rect = this.canvas.getBoundingClientRect();
+        // Account for canvas scaling
         return {
-            x: e.clientX - rect.left,
-            y: e.clientY - rect.top
+            x: (e.clientX - rect.left) / this.canvasScale,
+            y: (e.clientY - rect.top) / this.canvasScale
         };
     }
     
@@ -214,59 +256,13 @@ class DrawingBoard {
         const pos = this.getPosition(e);
         this.points.push(pos);
         
-        // Use requestAnimationFrame for smooth rendering
-        if (!this.pendingDraw) {
-            this.pendingDraw = true;
-            this.rafId = requestAnimationFrame(() => {
-                this.renderStroke();
-                this.pendingDraw = false;
-            });
-        }
-    }
-    
-    renderStroke() {
-        if (this.points.length < 2) return;
-        
-        // Ensure drawing context is set up before rendering
-        this.setupDrawingContext();
-        
-        const points = this.points;
-        
-        if (points.length >= 3) {
-            // Use single path for better performance
+        // Draw immediately for responsiveness
+        if (this.points.length >= 2) {
+            const lastIndex = this.points.length - 1;
             this.ctx.beginPath();
-            this.ctx.moveTo(points[0].x, points[0].y);
-            
-            // Draw smooth curve through points
-            for (let i = 1; i < points.length - 1; i++) {
-                const control = points[i];
-                const end = points[i + 1];
-                
-                // Calculate midpoint for smoother curves
-                const midX = (control.x + end.x) / 2;
-                const midY = (control.y + end.y) / 2;
-                
-                this.ctx.quadraticCurveTo(control.x, control.y, midX, midY);
-            }
-            
-            // Draw to the last point
-            const lastPoint = points[points.length - 1];
-            this.ctx.lineTo(lastPoint.x, lastPoint.y);
+            this.ctx.moveTo(this.points[lastIndex - 1].x, this.points[lastIndex - 1].y);
+            this.ctx.lineTo(this.points[lastIndex].x, this.points[lastIndex].y);
             this.ctx.stroke();
-        } else {
-            // Draw straight line for first segment
-            const start = points[points.length - 2];
-            const end = points[points.length - 1];
-            
-            this.ctx.beginPath();
-            this.ctx.moveTo(start.x, start.y);
-            this.ctx.lineTo(end.x, end.y);
-            this.ctx.stroke();
-        }
-        
-        // Keep only recent points for smoothing
-        if (this.points.length > 10) {
-            this.points = this.points.slice(-10);
         }
     }
     
@@ -275,12 +271,6 @@ class DrawingBoard {
             this.isDrawing = false;
             this.points = [];
             this.lastPoint = null;
-            
-            // Cancel any pending animation frame
-            if (this.rafId) {
-                cancelAnimationFrame(this.rafId);
-                this.rafId = null;
-            }
             
             // Save state after drawing
             this.saveState();
@@ -304,26 +294,20 @@ class DrawingBoard {
         document.getElementById('settings-modal').classList.remove('show');
     }
     
-    setButtonSize(size) {
-        this.buttonSize = size;
-        localStorage.setItem('buttonSize', size);
-        
-        // Update UI
-        const toolbar = document.getElementById('toolbar');
-        toolbar.className = `size-${size}`;
-        
-        // Update active button
-        document.querySelectorAll('.size-option-btn').forEach(btn => {
-            btn.classList.remove('active');
-            if (btn.dataset.size === size) {
-                btn.classList.add('active');
-            }
-        });
-    }
-    
     loadSettings() {
-        // Load button size setting
-        this.setButtonSize(this.buttonSize);
+        // Load toolbar size
+        document.getElementById('toolbar-size-slider').value = this.toolbarSize;
+        document.getElementById('toolbar-size-value').textContent = this.toolbarSize;
+        this.updateToolbarSize();
+        
+        // Load control position
+        this.setControlPosition(this.controlPosition);
+        
+        // Load edge snap setting
+        document.getElementById('edge-snap-checkbox').checked = this.edgeSnapEnabled;
+        
+        // Load canvas scale
+        this.applyZoom();
     }
     
     updateUI() {
@@ -412,6 +396,148 @@ class DrawingBoard {
             this.ctx.putImageData(imageData, 0, 0);
             this.updateUI();
         }
+    }
+    
+    // Zoom functions
+    zoomIn() {
+        this.canvasScale = Math.min(this.canvasScale + 0.1, 3.0);
+        this.applyZoom();
+    }
+    
+    zoomOut() {
+        this.canvasScale = Math.max(this.canvasScale - 0.1, 0.5);
+        this.applyZoom();
+    }
+    
+    zoomReset() {
+        this.canvasScale = 1.0;
+        this.applyZoom();
+    }
+    
+    applyZoom() {
+        this.canvas.style.transform = `scale(${this.canvasScale})`;
+        this.canvas.style.transformOrigin = 'center center';
+        localStorage.setItem('canvasScale', this.canvasScale);
+    }
+    
+    // Toolbar size update
+    updateToolbarSize() {
+        const toolbar = document.getElementById('toolbar');
+        const buttons = toolbar.querySelectorAll('.tool-btn');
+        
+        // Size calculation ratios for responsive toolbar scaling
+        // These ratios ensure proper proportions at different toolbar sizes
+        const PADDING_VERTICAL_RATIO = 5;    // Vertical padding = toolbarSize / 5
+        const PADDING_HORIZONTAL_RATIO = 3;  // Horizontal padding = toolbarSize / 3
+        const SVG_SIZE_RATIO = 2;            // Icon size = toolbarSize / 2
+        const FONT_SIZE_RATIO = 4.5;         // Font size = toolbarSize / 4.5
+        
+        buttons.forEach(btn => {
+            btn.style.padding = `${this.toolbarSize / PADDING_VERTICAL_RATIO}px ${this.toolbarSize / PADDING_HORIZONTAL_RATIO}px`;
+            btn.style.minWidth = `${this.toolbarSize}px`;
+            
+            const svg = btn.querySelector('svg');
+            if (svg) {
+                const svgSize = this.toolbarSize / SVG_SIZE_RATIO;
+                svg.style.width = `${svgSize}px`;
+                svg.style.height = `${svgSize}px`;
+            }
+            
+            const span = btn.querySelector('span');
+            if (span) {
+                span.style.fontSize = `${this.toolbarSize / FONT_SIZE_RATIO}px`;
+            }
+        });
+        
+        localStorage.setItem('toolbarSize', this.toolbarSize);
+    }
+    
+    // Control position
+    setControlPosition(position) {
+        this.controlPosition = position;
+        localStorage.setItem('controlPosition', position);
+        
+        const historyControls = document.getElementById('history-controls');
+        historyControls.className = '';
+        historyControls.classList.add(position);
+        
+        // Update active button
+        document.querySelectorAll('.position-option-btn').forEach(btn => {
+            btn.classList.remove('active');
+            if (btn.dataset.position === position) {
+                btn.classList.add('active');
+            }
+        });
+    }
+    
+    // Draggable panels
+    setupDraggablePanels() {
+        const historyControls = document.getElementById('history-controls');
+        const configArea = document.getElementById('config-area');
+        
+        [historyControls, configArea].forEach(element => {
+            element.addEventListener('mousedown', (e) => {
+                // Don't drag if clicking on a button or slider
+                if (e.target.closest('button') || e.target.closest('input')) return;
+                
+                this.isDraggingPanel = true;
+                this.draggedElement = element;
+                
+                const rect = element.getBoundingClientRect();
+                this.dragOffset.x = e.clientX - rect.left;
+                this.dragOffset.y = e.clientY - rect.top;
+                
+                // Cache element dimensions for performance during drag
+                this.draggedElementWidth = rect.width;
+                this.draggedElementHeight = rect.height;
+                
+                element.classList.add('dragging');
+                element.style.transition = 'none';
+                
+                e.preventDefault();
+            });
+        });
+        
+        document.addEventListener('mousemove', (e) => {
+            if (!this.isDraggingPanel || !this.draggedElement) return;
+            
+            let x = e.clientX - this.dragOffset.x;
+            let y = e.clientY - this.dragOffset.y;
+            
+            // Apply edge snapping if enabled
+            if (this.edgeSnapEnabled) {
+                const windowWidth = window.innerWidth;
+                const windowHeight = window.innerHeight;
+                
+                // Snap to left
+                if (x < this.edgeSnapDistance) x = 0;
+                // Snap to right
+                if (x + this.draggedElementWidth > windowWidth - this.edgeSnapDistance) {
+                    x = windowWidth - this.draggedElementWidth;
+                }
+                // Snap to top
+                if (y < this.edgeSnapDistance) y = 0;
+                // Snap to bottom
+                if (y + this.draggedElementHeight > windowHeight - this.edgeSnapDistance) {
+                    y = windowHeight - this.draggedElementHeight;
+                }
+            }
+            
+            this.draggedElement.style.left = `${x}px`;
+            this.draggedElement.style.top = `${y}px`;
+            this.draggedElement.style.transform = 'none';
+            this.draggedElement.style.right = 'auto';
+            this.draggedElement.style.bottom = 'auto';
+        });
+        
+        document.addEventListener('mouseup', () => {
+            if (this.isDraggingPanel && this.draggedElement) {
+                this.draggedElement.classList.remove('dragging');
+                this.draggedElement.style.transition = '';
+                this.isDraggingPanel = false;
+                this.draggedElement = null;
+            }
+        });
     }
 }
 
