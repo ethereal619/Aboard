@@ -9,6 +9,9 @@ class DrawingBoard {
             desynchronized: true // Better performance
         });
         
+        // Eraser cursor element
+        this.eraserCursor = document.getElementById('eraser-cursor');
+        
         // State management
         this.isDrawing = false;
         this.currentTool = 'pen';
@@ -27,10 +30,19 @@ class DrawingBoard {
         
         // UI settings
         this.toolbarSize = parseInt(localStorage.getItem('toolbarSize')) || 50;
+        this.configScale = parseFloat(localStorage.getItem('configScale')) || 1.0;
         this.controlPosition = localStorage.getItem('controlPosition') || 'top-right';
         this.edgeSnapEnabled = localStorage.getItem('edgeSnapEnabled') !== 'false';
         this.canvasScale = parseFloat(localStorage.getItem('canvasScale')) || 1.0;
         this.edgeSnapDistance = 20; // Distance in pixels for edge snapping
+        
+        // Infinite canvas pan state
+        this.panOffset = { 
+            x: parseFloat(localStorage.getItem('panOffsetX')) || 0, 
+            y: parseFloat(localStorage.getItem('panOffsetY')) || 0 
+        };
+        this.isPanning = false;
+        this.lastPanPoint = null;
         
         // Dragging state
         this.isDraggingPanel = false;
@@ -86,10 +98,36 @@ class DrawingBoard {
     setupEventListeners() {
         // Canvas drawing events
         // Mouse events
-        this.canvas.addEventListener('mousedown', (e) => this.startDrawing(e));
-        this.canvas.addEventListener('mousemove', (e) => this.draw(e));
-        this.canvas.addEventListener('mouseup', () => this.stopDrawing());
-        this.canvas.addEventListener('mouseout', () => this.stopDrawing());
+        this.canvas.addEventListener('mousedown', (e) => {
+            if (e.button === 1 || (e.button === 0 && e.shiftKey)) {
+                // Middle mouse button or Shift+Left click for panning
+                this.startPanning(e);
+            } else {
+                this.startDrawing(e);
+            }
+        });
+        this.canvas.addEventListener('mousemove', (e) => {
+            if (this.isPanning) {
+                this.pan(e);
+            } else {
+                this.draw(e);
+                this.updateEraserCursor(e);
+            }
+        });
+        this.canvas.addEventListener('mouseup', () => {
+            this.stopDrawing();
+            this.stopPanning();
+        });
+        this.canvas.addEventListener('mouseout', () => {
+            this.stopDrawing();
+            this.stopPanning();
+            this.hideEraserCursor();
+        });
+        this.canvas.addEventListener('mouseenter', (e) => {
+            if (this.currentTool === 'eraser') {
+                this.showEraserCursor();
+            }
+        });
         
         // Touch events
         this.canvas.addEventListener('touchstart', (e) => {
@@ -126,6 +164,14 @@ class DrawingBoard {
             });
         });
         
+        // Custom color picker
+        const customColorPicker = document.getElementById('custom-color-picker');
+        customColorPicker.addEventListener('input', (e) => {
+            this.currentColor = e.target.value;
+            // Remove active class from all preset color buttons
+            document.querySelectorAll('.color-btn[data-color]').forEach(b => b.classList.remove('active'));
+        });
+        
         // Background color picker
         document.querySelectorAll('.color-btn[data-bg-color]').forEach(btn => {
             btn.addEventListener('click', (e) => {
@@ -160,6 +206,11 @@ class DrawingBoard {
         eraserSizeSlider.addEventListener('input', (e) => {
             this.eraserSize = parseInt(e.target.value);
             eraserSizeValue.textContent = this.eraserSize;
+            // Update eraser cursor size in real-time
+            if (this.currentTool === 'eraser') {
+                this.eraserCursor.style.width = this.eraserSize + 'px';
+                this.eraserCursor.style.height = this.eraserSize + 'px';
+            }
         });
         
         // History and zoom buttons
@@ -196,6 +247,15 @@ class DrawingBoard {
             this.updateToolbarSize();
         });
         
+        // Config scale slider
+        const configScaleSlider = document.getElementById('config-scale-slider');
+        const configScaleValue = document.getElementById('config-scale-value');
+        configScaleSlider.addEventListener('input', (e) => {
+            this.configScale = parseInt(e.target.value) / 100;
+            configScaleValue.textContent = Math.round(this.configScale * 100);
+            this.updateConfigScale();
+        });
+        
         // Control position buttons
         document.querySelectorAll('.position-option-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
@@ -220,6 +280,20 @@ class DrawingBoard {
         // Pagination controls
         document.getElementById('prev-page-btn').addEventListener('click', () => this.prevPage());
         document.getElementById('next-page-btn').addEventListener('click', () => this.nextPage());
+        
+        // Page input
+        const pageInput = document.getElementById('page-input');
+        pageInput.addEventListener('change', (e) => {
+            const pageNum = parseInt(e.target.value);
+            if (!isNaN(pageNum) && pageNum >= 1) {
+                this.goToPage(pageNum);
+            } else {
+                e.target.value = this.currentPage;
+            }
+        });
+        pageInput.addEventListener('focus', (e) => {
+            e.target.select();
+        });
         
         // Close modal when clicking outside
         document.getElementById('settings-modal').addEventListener('click', (e) => {
@@ -260,17 +334,93 @@ class DrawingBoard {
         // Draggable panels
         this.setupDraggablePanels();
         
+        // Ctrl + Mouse wheel zoom
+        this.canvas.addEventListener('wheel', (e) => {
+            if (e.ctrlKey || e.metaKey) {
+                e.preventDefault();
+                const delta = e.deltaY > 0 ? -0.1 : 0.1;
+                this.canvasScale = Math.max(0.5, Math.min(3.0, this.canvasScale + delta));
+                this.applyZoom();
+            }
+        }, { passive: false });
+        
         // Window resize
         window.addEventListener('resize', () => this.resizeCanvas());
     }
     
     getPosition(e) {
         const rect = this.canvas.getBoundingClientRect();
-        // Account for canvas scaling
+        // Account for canvas scaling and pan offset
         return {
-            x: (e.clientX - rect.left) / this.canvasScale,
-            y: (e.clientY - rect.top) / this.canvasScale
+            x: (e.clientX - rect.left) / this.canvasScale - this.panOffset.x,
+            y: (e.clientY - rect.top) / this.canvasScale - this.panOffset.y
         };
+    }
+    
+    startPanning(e) {
+        if (!this.infiniteCanvas) return;
+        this.isPanning = true;
+        this.lastPanPoint = { x: e.clientX, y: e.clientY };
+        this.canvas.style.cursor = 'grab';
+        e.preventDefault();
+    }
+    
+    pan(e) {
+        if (!this.isPanning || !this.lastPanPoint) return;
+        
+        const dx = (e.clientX - this.lastPanPoint.x) / this.canvasScale;
+        const dy = (e.clientY - this.lastPanPoint.y) / this.canvasScale;
+        
+        this.panOffset.x += dx;
+        this.panOffset.y += dy;
+        
+        this.lastPanPoint = { x: e.clientX, y: e.clientY };
+        
+        // Redraw canvas with new pan offset
+        this.redrawCanvas();
+        
+        // Save pan offset
+        localStorage.setItem('panOffsetX', this.panOffset.x);
+        localStorage.setItem('panOffsetY', this.panOffset.y);
+    }
+    
+    stopPanning() {
+        if (this.isPanning) {
+            this.isPanning = false;
+            this.lastPanPoint = null;
+            this.updateCursor();
+        }
+    }
+    
+    updateCursor() {
+        if (this.currentTool === 'pen') {
+            this.canvas.style.cursor = 'crosshair';
+        } else if (this.currentTool === 'eraser') {
+            this.canvas.style.cursor = 'pointer';
+        } else {
+            this.canvas.style.cursor = 'default';
+        }
+    }
+    
+    redrawCanvas() {
+        // Temporarily store the current canvas state
+        const tempCanvas = document.createElement('canvas');
+        tempCanvas.width = this.canvas.width;
+        tempCanvas.height = this.canvas.height;
+        const tempCtx = tempCanvas.getContext('2d');
+        tempCtx.drawImage(this.canvas, 0, 0);
+        
+        // Clear and redraw with pan offset
+        this.ctx.save();
+        this.ctx.setTransform(1, 0, 0, 1, 0, 0);
+        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        
+        // Apply pan transformation
+        this.ctx.translate(this.panOffset.x, this.panOffset.y);
+        
+        // Redraw the content
+        this.ctx.drawImage(tempCanvas, -this.panOffset.x, -this.panOffset.y);
+        this.ctx.restore();
     }
     
     startDrawing(e) {
@@ -332,8 +482,32 @@ class DrawingBoard {
         }
     }
     
+    updateEraserCursor(e) {
+        if (this.currentTool === 'eraser') {
+            this.eraserCursor.style.left = e.clientX + 'px';
+            this.eraserCursor.style.top = e.clientY + 'px';
+            this.eraserCursor.style.width = this.eraserSize + 'px';
+            this.eraserCursor.style.height = this.eraserSize + 'px';
+        }
+    }
+    
+    showEraserCursor() {
+        if (this.currentTool === 'eraser') {
+            this.eraserCursor.style.display = 'block';
+        }
+    }
+    
+    hideEraserCursor() {
+        this.eraserCursor.style.display = 'none';
+    }
+    
     setTool(tool) {
         this.currentTool = tool;
+        if (tool === 'eraser') {
+            this.showEraserCursor();
+        } else {
+            this.hideEraserCursor();
+        }
         this.updateUI();
     }
     
@@ -354,6 +528,11 @@ class DrawingBoard {
         document.getElementById('toolbar-size-slider').value = this.toolbarSize;
         document.getElementById('toolbar-size-value').textContent = this.toolbarSize;
         this.updateToolbarSize();
+        
+        // Load config scale
+        document.getElementById('config-scale-slider').value = Math.round(this.configScale * 100);
+        document.getElementById('config-scale-value').textContent = Math.round(this.configScale * 100);
+        this.updateConfigScale();
         
         // Load control position
         this.setControlPosition(this.controlPosition);
@@ -540,14 +719,29 @@ class DrawingBoard {
         localStorage.setItem('toolbarSize', this.toolbarSize);
     }
     
+    // Config scale update
+    updateConfigScale() {
+        const configArea = document.getElementById('config-area');
+        configArea.style.transform = `translateX(-50%) scale(${this.configScale})`;
+        localStorage.setItem('configScale', this.configScale);
+    }
+    
     // Control position
     setControlPosition(position) {
         this.controlPosition = position;
         localStorage.setItem('controlPosition', position);
         
         const historyControls = document.getElementById('history-controls');
+        const paginationControls = document.getElementById('pagination-controls');
+        
         historyControls.className = '';
         historyControls.classList.add(position);
+        
+        paginationControls.className = '';
+        if (!this.infiniteCanvas) {
+            paginationControls.classList.add('show');
+        }
+        paginationControls.classList.add(position);
         
         // Update active button
         document.querySelectorAll('.position-option-btn').forEach(btn => {
@@ -654,11 +848,12 @@ class DrawingBoard {
         this.ctx.globalCompositeOperation = 'source-over';
         
         const dpr = window.devicePixelRatio || 1;
+        const patternColor = this.getPatternColor();
         
         if (this.backgroundPattern === 'dots') {
             // Draw dot grid pattern
             const spacing = 20 * dpr;
-            this.ctx.fillStyle = this.getPatternColor();
+            this.ctx.fillStyle = patternColor;
             
             for (let x = spacing; x < this.canvas.width; x += spacing) {
                 for (let y = spacing; y < this.canvas.height; y += spacing) {
@@ -668,9 +863,9 @@ class DrawingBoard {
                 }
             }
         } else if (this.backgroundPattern === 'grid') {
-            // Draw line grid pattern
+            // Draw square grid pattern
             const spacing = 20 * dpr;
-            this.ctx.strokeStyle = this.getPatternColor();
+            this.ctx.strokeStyle = patternColor;
             this.ctx.lineWidth = 0.5 * dpr;
             
             // Vertical lines
@@ -688,9 +883,169 @@ class DrawingBoard {
                 this.ctx.lineTo(this.canvas.width, y);
                 this.ctx.stroke();
             }
+        } else if (this.backgroundPattern === 'tianzige') {
+            // Draw Tian Zi Ge (田字格) pattern - Chinese character practice grid
+            const cellSize = 60 * dpr;
+            this.ctx.strokeStyle = patternColor;
+            
+            for (let x = 0; x < this.canvas.width; x += cellSize) {
+                for (let y = 0; y < this.canvas.height; y += cellSize) {
+                    // Outer square (bold)
+                    this.ctx.lineWidth = 2 * dpr;
+                    this.ctx.strokeRect(x, y, cellSize, cellSize);
+                    
+                    // Inner cross lines (lighter)
+                    this.ctx.lineWidth = 0.5 * dpr;
+                    // Vertical middle line
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(x + cellSize / 2, y);
+                    this.ctx.lineTo(x + cellSize / 2, y + cellSize);
+                    this.ctx.stroke();
+                    
+                    // Horizontal middle line
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(x, y + cellSize / 2);
+                    this.ctx.lineTo(x + cellSize, y + cellSize / 2);
+                    this.ctx.stroke();
+                    
+                    // Diagonal lines
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(x, y);
+                    this.ctx.lineTo(x + cellSize, y + cellSize);
+                    this.ctx.stroke();
+                    
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(x + cellSize, y);
+                    this.ctx.lineTo(x, y + cellSize);
+                    this.ctx.stroke();
+                }
+            }
+        } else if (this.backgroundPattern === 'english-lines') {
+            // Draw 4-line English writing paper
+            const lineHeight = 60 * dpr;
+            this.ctx.strokeStyle = patternColor;
+            
+            for (let y = lineHeight; y < this.canvas.height; y += lineHeight) {
+                // Top line (solid)
+                this.ctx.lineWidth = 1 * dpr;
+                this.ctx.beginPath();
+                this.ctx.moveTo(0, y);
+                this.ctx.lineTo(this.canvas.width, y);
+                this.ctx.stroke();
+                
+                // Upper middle line (dashed)
+                this.ctx.lineWidth = 0.5 * dpr;
+                this.ctx.setLineDash([5 * dpr, 5 * dpr]);
+                this.ctx.beginPath();
+                this.ctx.moveTo(0, y + lineHeight / 4);
+                this.ctx.lineTo(this.canvas.width, y + lineHeight / 4);
+                this.ctx.stroke();
+                
+                // Middle line (solid, red for baseline)
+                this.ctx.setLineDash([]);
+                this.ctx.strokeStyle = this.isLightBackground() ? 'rgba(255, 0, 0, 0.3)' : 'rgba(255, 100, 100, 0.5)';
+                this.ctx.lineWidth = 1 * dpr;
+                this.ctx.beginPath();
+                this.ctx.moveTo(0, y + lineHeight / 2);
+                this.ctx.lineTo(this.canvas.width, y + lineHeight / 2);
+                this.ctx.stroke();
+                this.ctx.strokeStyle = patternColor;
+                
+                // Lower middle line (dashed)
+                this.ctx.lineWidth = 0.5 * dpr;
+                this.ctx.setLineDash([5 * dpr, 5 * dpr]);
+                this.ctx.beginPath();
+                this.ctx.moveTo(0, y + 3 * lineHeight / 4);
+                this.ctx.lineTo(this.canvas.width, y + 3 * lineHeight / 4);
+                this.ctx.stroke();
+                this.ctx.setLineDash([]);
+            }
+        } else if (this.backgroundPattern === 'music-staff') {
+            // Draw 5-line music staff
+            const staffHeight = 80 * dpr;
+            const lineSpacing = staffHeight / 4;
+            this.ctx.strokeStyle = patternColor;
+            this.ctx.lineWidth = 1 * dpr;
+            
+            for (let startY = staffHeight; startY < this.canvas.height; startY += staffHeight * 2) {
+                // Draw 5 horizontal lines
+                for (let i = 0; i < 5; i++) {
+                    const y = startY + i * lineSpacing;
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(0, y);
+                    this.ctx.lineTo(this.canvas.width, y);
+                    this.ctx.stroke();
+                }
+            }
+        } else if (this.backgroundPattern === 'coordinate') {
+            // Draw coordinate system (平面直角坐标系)
+            const centerX = this.canvas.width / 2;
+            const centerY = this.canvas.height / 2;
+            const gridSize = 20 * dpr;
+            
+            // Draw grid lines
+            this.ctx.strokeStyle = this.isLightBackground() ? 'rgba(0, 0, 0, 0.1)' : 'rgba(255, 255, 255, 0.1)';
+            this.ctx.lineWidth = 0.5 * dpr;
+            
+            // Vertical grid lines
+            for (let x = 0; x < this.canvas.width; x += gridSize) {
+                this.ctx.beginPath();
+                this.ctx.moveTo(x, 0);
+                this.ctx.lineTo(x, this.canvas.height);
+                this.ctx.stroke();
+            }
+            
+            // Horizontal grid lines
+            for (let y = 0; y < this.canvas.height; y += gridSize) {
+                this.ctx.beginPath();
+                this.ctx.moveTo(0, y);
+                this.ctx.lineTo(this.canvas.width, y);
+                this.ctx.stroke();
+            }
+            
+            // Draw main axes (thicker)
+            this.ctx.strokeStyle = patternColor;
+            this.ctx.lineWidth = 2 * dpr;
+            
+            // X-axis
+            this.ctx.beginPath();
+            this.ctx.moveTo(0, centerY);
+            this.ctx.lineTo(this.canvas.width, centerY);
+            this.ctx.stroke();
+            
+            // Y-axis
+            this.ctx.beginPath();
+            this.ctx.moveTo(centerX, 0);
+            this.ctx.lineTo(centerX, this.canvas.height);
+            this.ctx.stroke();
+            
+            // Draw arrows on axes
+            const arrowSize = 10 * dpr;
+            
+            // X-axis arrow (right)
+            this.ctx.beginPath();
+            this.ctx.moveTo(this.canvas.width - arrowSize, centerY - arrowSize / 2);
+            this.ctx.lineTo(this.canvas.width, centerY);
+            this.ctx.lineTo(this.canvas.width - arrowSize, centerY + arrowSize / 2);
+            this.ctx.stroke();
+            
+            // Y-axis arrow (up)
+            this.ctx.beginPath();
+            this.ctx.moveTo(centerX - arrowSize / 2, arrowSize);
+            this.ctx.lineTo(centerX, 0);
+            this.ctx.lineTo(centerX + arrowSize / 2, arrowSize);
+            this.ctx.stroke();
         }
         
         this.ctx.restore();
+    }
+    
+    isLightBackground() {
+        const r = parseInt(this.backgroundColor.slice(1, 3), 16);
+        const g = parseInt(this.backgroundColor.slice(3, 5), 16);
+        const b = parseInt(this.backgroundColor.slice(5, 7), 16);
+        const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+        return brightness > 128;
     }
     
     getPatternColor() {
@@ -730,7 +1085,8 @@ class DrawingBoard {
     }
     
     updatePaginationUI() {
-        document.getElementById('page-indicator').textContent = `第 ${this.currentPage} 页`;
+        document.getElementById('page-input').value = this.currentPage;
+        document.getElementById('page-total').textContent = `/ ${this.pages.length}`;
         document.getElementById('prev-page-btn').disabled = this.currentPage <= 1;
         // Next button is never disabled - can always create new page
     }
@@ -765,6 +1121,31 @@ class DrawingBoard {
             this.ctx.putImageData(this.pages[this.currentPage - 1], 0, 0);
         }
         
+        this.updatePaginationUI();
+    }
+    
+    goToPage(pageNum) {
+        if (pageNum < 1) return;
+        
+        // Save current page
+        const imageData = this.ctx.getImageData(0, 0, this.canvas.width, this.canvas.height);
+        this.pages[this.currentPage - 1] = imageData;
+        
+        // Create pages if necessary
+        while (this.pages.length < pageNum) {
+            // Save current state, create a blank page
+            const blankCanvas = document.createElement('canvas');
+            blankCanvas.width = this.canvas.width;
+            blankCanvas.height = this.canvas.height;
+            const blankCtx = blankCanvas.getContext('2d');
+            blankCtx.fillStyle = this.backgroundColor;
+            blankCtx.fillRect(0, 0, blankCanvas.width, blankCanvas.height);
+            this.pages.push(blankCtx.getImageData(0, 0, blankCanvas.width, blankCanvas.height));
+        }
+        
+        // Load the target page
+        this.currentPage = pageNum;
+        this.ctx.putImageData(this.pages[this.currentPage - 1], 0, 0);
         this.updatePaginationUI();
     }
     

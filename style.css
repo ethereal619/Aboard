@@ -26,6 +26,17 @@ body {
     cursor: crosshair;
 }
 
+/* Eraser cursor */
+#eraser-cursor {
+    position: fixed;
+    pointer-events: none;
+    border: 2px solid #333;
+    border-radius: 50%;
+    background-color: rgba(255, 255, 255, 0.3);
+    z-index: 9999;
+    transform: translate(-50%, -50%);
+}
+
 /* History controls (Undo/Redo/Zoom) */
 #history-controls {
     position: fixed;
@@ -187,6 +198,7 @@ body {
 .color-picker {
     display: flex;
     gap: 8px;
+    flex-wrap: wrap;
 }
 
 .color-btn {
@@ -197,6 +209,25 @@ body {
     cursor: pointer;
     transition: all 0.2s ease;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.custom-color-picker {
+    width: 36px;
+    height: 36px;
+    border: 3px solid transparent;
+    border-radius: 8px;
+    cursor: pointer;
+    padding: 0;
+    overflow: hidden;
+}
+
+.custom-color-picker::-webkit-color-swatch-wrapper {
+    padding: 0;
+}
+
+.custom-color-picker::-webkit-color-swatch {
+    border: none;
+    border-radius: 5px;
 }
 
 .color-btn:hover {
@@ -415,6 +446,12 @@ body {
     gap: 12px;
 }
 
+.button-size-options.pattern-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+}
+
 .size-option-btn {
     flex: 1;
     padding: 12px 16px;
@@ -465,15 +502,16 @@ body {
 
 .pattern-option-btn {
     flex: 1;
-    padding: 12px 16px;
+    padding: 8px 12px;
     border: 2px solid #ddd;
     border-radius: 8px;
     background-color: #ffffff;
     cursor: pointer;
     transition: all 0.2s ease;
     color: #666;
-    font-size: 14px;
+    font-size: 12px;
     font-weight: 500;
+    white-space: nowrap;
 }
 
 .pattern-option-btn:hover {
@@ -495,13 +533,31 @@ body {
 
 /* Pagination controls */
 #pagination-controls {
+    position: fixed;
+    top: 80px;
+    right: 20px;
+    z-index: 1000;
     display: none;
     align-items: center;
-    gap: 12px;
+    gap: 8px;
+    padding: 8px 12px;
+    background-color: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 #pagination-controls.show {
     display: flex;
+}
+
+#pagination-controls.top-left {
+    right: auto;
+    left: 20px;
+}
+
+#pagination-controls.bottom-right {
+    top: auto;
+    bottom: 100px;
 }
 
 .page-nav-btn {
@@ -527,12 +583,28 @@ body {
     cursor: not-allowed;
 }
 
-#page-indicator {
+.page-input {
+    width: 50px;
+    height: 36px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    background-color: #ffffff;
+    text-align: center;
     font-size: 14px;
     font-weight: 500;
     color: #333;
-    min-width: 60px;
-    text-align: center;
+    padding: 0 8px;
+}
+
+.page-input:focus {
+    outline: none;
+    border-color: #007AFF;
+}
+
+#page-total {
+    font-size: 14px;
+    font-weight: 500;
+    color: #666;
 }
 
 .checkbox-label {
