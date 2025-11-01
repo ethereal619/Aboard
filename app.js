@@ -422,20 +422,26 @@ class DrawingBoard {
         const toolbar = document.getElementById('toolbar');
         const buttons = toolbar.querySelectorAll('.tool-btn');
         
+        // Constants for size calculations
+        const PADDING_VERTICAL_RATIO = 5;
+        const PADDING_HORIZONTAL_RATIO = 3;
+        const SVG_SIZE_RATIO = 2;
+        const FONT_SIZE_RATIO = 4.5;
+        
         buttons.forEach(btn => {
-            btn.style.padding = `${this.toolbarSize / 5}px ${this.toolbarSize / 3}px`;
+            btn.style.padding = `${this.toolbarSize / PADDING_VERTICAL_RATIO}px ${this.toolbarSize / PADDING_HORIZONTAL_RATIO}px`;
             btn.style.minWidth = `${this.toolbarSize}px`;
             
             const svg = btn.querySelector('svg');
             if (svg) {
-                const svgSize = this.toolbarSize / 2;
+                const svgSize = this.toolbarSize / SVG_SIZE_RATIO;
                 svg.style.width = `${svgSize}px`;
                 svg.style.height = `${svgSize}px`;
             }
             
             const span = btn.querySelector('span');
             if (span) {
-                span.style.fontSize = `${this.toolbarSize / 4.5}px`;
+                span.style.fontSize = `${this.toolbarSize / FONT_SIZE_RATIO}px`;
             }
         });
         
@@ -477,6 +483,10 @@ class DrawingBoard {
                 this.dragOffset.x = e.clientX - rect.left;
                 this.dragOffset.y = e.clientY - rect.top;
                 
+                // Cache element dimensions for performance during drag
+                this.draggedElementWidth = rect.width;
+                this.draggedElementHeight = rect.height;
+                
                 element.classList.add('dragging');
                 element.style.transition = 'none';
                 
@@ -493,18 +503,21 @@ class DrawingBoard {
             // Apply edge snapping if enabled
             if (this.edgeSnapEnabled) {
                 const snapDistance = 20;
-                const rect = this.draggedElement.getBoundingClientRect();
                 const windowWidth = window.innerWidth;
                 const windowHeight = window.innerHeight;
                 
                 // Snap to left
                 if (x < snapDistance) x = 0;
                 // Snap to right
-                if (x + rect.width > windowWidth - snapDistance) x = windowWidth - rect.width;
+                if (x + this.draggedElementWidth > windowWidth - snapDistance) {
+                    x = windowWidth - this.draggedElementWidth;
+                }
                 // Snap to top
                 if (y < snapDistance) y = 0;
                 // Snap to bottom
-                if (y + rect.height > windowHeight - snapDistance) y = windowHeight - rect.height;
+                if (y + this.draggedElementHeight > windowHeight - snapDistance) {
+                    y = windowHeight - this.draggedElementHeight;
+                }
             }
             
             this.draggedElement.style.left = `${x}px`;
