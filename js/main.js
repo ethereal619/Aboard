@@ -40,6 +40,7 @@ class DrawingBoard {
         this.updateUI();
         this.historyManager.saveState();
         this.updateZoomUI();
+        this.applyZoom();
     }
     
     resizeCanvas() {
@@ -513,7 +514,7 @@ class DrawingBoard {
         const newScale = Math.min(currentScale + 0.1, 3.0);
         this.drawingEngine.canvasScale = newScale;
         this.updateZoomUI();
-        this.redrawCanvas();
+        this.applyZoom();
         localStorage.setItem('canvasScale', newScale);
     }
     
@@ -522,7 +523,7 @@ class DrawingBoard {
         const newScale = Math.max(currentScale - 0.1, 0.5);
         this.drawingEngine.canvasScale = newScale;
         this.updateZoomUI();
-        this.redrawCanvas();
+        this.applyZoom();
         localStorage.setItem('canvasScale', newScale);
     }
     
@@ -536,8 +537,16 @@ class DrawingBoard {
         const newScale = percent / 100;
         this.drawingEngine.canvasScale = newScale;
         this.updateZoomUI();
-        this.redrawCanvas();
+        this.applyZoom();
         localStorage.setItem('canvasScale', newScale);
+    }
+    
+    applyZoom() {
+        // Apply zoom using CSS transform for better performance
+        this.canvas.style.transform = `scale(${this.drawingEngine.canvasScale})`;
+        this.bgCanvas.style.transform = `scale(${this.drawingEngine.canvasScale})`;
+        this.canvas.style.transformOrigin = 'center center';
+        this.bgCanvas.style.transformOrigin = 'center center';
     }
     
     updateZoomUI() {
@@ -639,19 +648,19 @@ class DrawingBoard {
     }
     
     redrawCanvas() {
+        // Save current canvas content
         const tempCanvas = document.createElement('canvas');
         tempCanvas.width = this.canvas.width;
         tempCanvas.height = this.canvas.height;
         const tempCtx = tempCanvas.getContext('2d');
         tempCtx.drawImage(this.canvas, 0, 0);
         
-        this.ctx.save();
+        // Clear and restore with pan transformations
         const dpr = window.devicePixelRatio || 1;
+        this.ctx.save();
         this.ctx.setTransform(1, 0, 0, 1, 0, 0);
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-        
-        // Apply zoom and pan
-        this.ctx.scale(dpr * this.drawingEngine.canvasScale, dpr * this.drawingEngine.canvasScale);
+        this.ctx.scale(dpr, dpr);
         this.ctx.translate(this.drawingEngine.panOffset.x, this.drawingEngine.panOffset.y);
         this.ctx.drawImage(tempCanvas, 0, 0, this.canvas.width / dpr, this.canvas.height / dpr);
         this.ctx.restore();
