@@ -217,6 +217,45 @@ body {
     flex-wrap: wrap;
 }
 
+.color-picker-custom {
+    margin-top: 8px;
+}
+
+.color-picker-icon-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    background-color: #f8f8f8;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.color-picker-icon-btn:hover {
+    background-color: #e8e8e8;
+    border-color: #007AFF;
+    transform: scale(1.05);
+}
+
+.color-picker-icon-btn svg {
+    color: #666;
+    position: relative;
+    z-index: 1;
+    pointer-events: none;
+}
+
+.custom-color-picker-input {
+    position: absolute;
+    width: 0;
+    height: 0;
+    opacity: 0;
+}
+
 .color-btn {
     width: 36px;
     height: 36px;
@@ -225,25 +264,6 @@ body {
     cursor: pointer;
     transition: all 0.2s ease;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.custom-color-picker {
-    width: 36px;
-    height: 36px;
-    border: 3px solid transparent;
-    border-radius: 8px;
-    cursor: pointer;
-    padding: 0;
-    overflow: hidden;
-}
-
-.custom-color-picker::-webkit-color-swatch-wrapper {
-    padding: 0;
-}
-
-.custom-color-picker::-webkit-color-swatch {
-    border: none;
-    border-radius: 5px;
 }
 
 .color-btn:hover {

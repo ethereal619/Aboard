@@ -27,6 +27,8 @@ class DrawingBoard {
         // Background settings
         this.backgroundColor = localStorage.getItem('backgroundColor') || '#ffffff';
         this.backgroundPattern = localStorage.getItem('backgroundPattern') || 'blank';
+        this.bgOpacity = parseFloat(localStorage.getItem('bgOpacity')) || 1.0;
+        this.patternIntensity = parseFloat(localStorage.getItem('patternIntensity')) || 0.5;
         
         // Canvas mode settings
         this.infiniteCanvas = localStorage.getItem('infiniteCanvas') !== 'false';
@@ -184,6 +186,15 @@ class DrawingBoard {
             document.querySelectorAll('.color-btn[data-color]').forEach(b => b.classList.remove('active'));
         });
         
+        // Custom background color picker
+        const customBgColorPicker = document.getElementById('custom-bg-color-picker');
+        customBgColorPicker.addEventListener('input', (e) => {
+            this.backgroundColor = e.target.value;
+            // Remove active class from all preset background color buttons
+            document.querySelectorAll('.color-btn[data-bg-color]').forEach(b => b.classList.remove('active'));
+            this.applyBackground();
+        });
+        
         // Background color picker
         document.querySelectorAll('.color-btn[data-bg-color]').forEach(btn => {
             btn.addEventListener('click', (e) => {
@@ -202,6 +213,24 @@ class DrawingBoard {
                 e.target.classList.add('active');
                 this.applyBackground();
             });
+        });
+        
+        // Background opacity slider
+        const bgOpacitySlider = document.getElementById('bg-opacity-slider');
+        const bgOpacityValue = document.getElementById('bg-opacity-value');
+        bgOpacitySlider.addEventListener('input', (e) => {
+            this.bgOpacity = parseInt(e.target.value) / 100;
+            bgOpacityValue.textContent = e.target.value;
+            this.applyBackground();
+        });
+        
+        // Pattern intensity slider
+        const patternIntensitySlider = document.getElementById('pattern-intensity-slider');
+        const patternIntensityValue = document.getElementById('pattern-intensity-value');
+        patternIntensitySlider.addEventListener('input', (e) => {
+            this.patternIntensity = parseInt(e.target.value) / 100;
+            patternIntensityValue.textContent = e.target.value;
+            this.applyBackground();
         });
         
         // Pen size slider
@@ -583,6 +612,10 @@ class DrawingBoard {
         document.getElementById('infinite-canvas-checkbox').checked = this.infiniteCanvas;
         
         // Load background settings
+        document.getElementById('bg-opacity-slider').value = Math.round(this.bgOpacity * 100);
+        document.getElementById('bg-opacity-value').textContent = Math.round(this.bgOpacity * 100);
+        document.getElementById('pattern-intensity-slider').value = Math.round(this.patternIntensity * 100);
+        document.getElementById('pattern-intensity-value').textContent = Math.round(this.patternIntensity * 100);
         this.applyBackground();
         
         // Load canvas scale and update zoom display
@@ -864,11 +897,20 @@ class DrawingBoard {
     }
     
     drawBackground() {
-        // Draw background on the background canvas
+        // Clear background canvas first
+        this.bgCtx.clearRect(0, 0, this.bgCanvas.width, this.bgCanvas.height);
+        
+        // Draw background color with opacity
+        this.bgCtx.globalAlpha = this.bgOpacity;
         this.bgCtx.fillStyle = this.backgroundColor;
         this.bgCtx.fillRect(0, 0, this.bgCanvas.width, this.bgCanvas.height);
+        this.bgCtx.globalAlpha = 1.0;
         
         this.drawBackgroundPattern();
+        
+        // Save settings
+        localStorage.setItem('bgOpacity', this.bgOpacity);
+        localStorage.setItem('patternIntensity', this.patternIntensity);
     }
     
     drawBackgroundPattern() {
@@ -1081,13 +1123,15 @@ class DrawingBoard {
     }
     
     getPatternColor() {
-        // Choose pattern color based on background brightness
+        // Choose pattern color based on background brightness and apply intensity
         const r = parseInt(this.backgroundColor.slice(1, 3), 16);
         const g = parseInt(this.backgroundColor.slice(3, 5), 16);
         const b = parseInt(this.backgroundColor.slice(5, 7), 16);
         const brightness = (r * 299 + g * 587 + b * 114) / 1000;
         
-        return brightness > 128 ? 'rgba(0, 0, 0, 0.1)' : 'rgba(255, 255, 255, 0.1)';
+        // Scale opacity based on pattern intensity (0.1 to 1.0 range)
+        const baseOpacity = this.patternIntensity;
+        return brightness > 128 ? `rgba(0, 0, 0, ${baseOpacity * 0.2})` : `rgba(255, 255, 255, ${baseOpacity * 0.2})`;
     }
     
     // Canvas mode functions
