@@ -26,7 +26,7 @@ body {
     cursor: crosshair;
 }
 
-/* History controls (Undo/Redo) */
+/* History controls (Undo/Redo/Zoom) */
 #history-controls {
     position: fixed;
     top: 20px;
@@ -34,6 +34,21 @@ body {
     display: flex;
     gap: 10px;
     z-index: 1000;
+    cursor: move;
+}
+
+#history-controls.top-left {
+    right: auto;
+    left: 20px;
+}
+
+#history-controls.bottom-right {
+    top: auto;
+    bottom: 100px;
+}
+
+#history-controls.dragging {
+    cursor: grabbing;
 }
 
 .history-btn {
@@ -86,10 +101,15 @@ body {
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
     min-width: 320px;
     display: none;
+    cursor: move;
 }
 
 #config-area.show {
     display: block;
+}
+
+#config-area.dragging {
+    cursor: grabbing;
 }
 
 .config-close-btn {
@@ -390,6 +410,49 @@ body {
     background-color: #007AFF;
     color: #ffffff;
     border-color: #007AFF;
+}
+
+.position-option-btn {
+    flex: 1;
+    padding: 12px 16px;
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    background-color: #ffffff;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    color: #666;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.position-option-btn:hover {
+    background-color: #f0f0f0;
+    border-color: #ccc;
+}
+
+.position-option-btn.active {
+    background-color: #007AFF;
+    color: #ffffff;
+    border-color: #007AFF;
+}
+
+.checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+}
+
+.checkbox-label input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+}
+
+.checkbox-label span {
+    font-size: 14px;
+    color: #333;
+    font-weight: 500;
 }
 
 /* Responsive adjustments */

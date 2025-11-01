@@ -18,7 +18,15 @@ class DrawingBoard {
         this.eraserSize = 20;
         
         // UI settings
-        this.buttonSize = localStorage.getItem('buttonSize') || 'medium';
+        this.toolbarSize = parseInt(localStorage.getItem('toolbarSize')) || 50;
+        this.controlPosition = localStorage.getItem('controlPosition') || 'top-right';
+        this.edgeSnapEnabled = localStorage.getItem('edgeSnapEnabled') !== 'false';
+        this.canvasScale = 1.0;
+        
+        // Dragging state
+        this.isDraggingPanel = false;
+        this.draggedElement = null;
+        this.dragOffset = { x: 0, y: 0 };
         
         // History management for undo/redo
         this.history = [];
@@ -122,17 +130,37 @@ class DrawingBoard {
             eraserSizeValue.textContent = this.eraserSize;
         });
         
-        // History buttons
+        // History and zoom buttons
         document.getElementById('undo-btn').addEventListener('click', () => this.undo());
         document.getElementById('redo-btn').addEventListener('click', () => this.redo());
+        document.getElementById('zoom-in-btn').addEventListener('click', () => this.zoomIn());
+        document.getElementById('zoom-out-btn').addEventListener('click', () => this.zoomOut());
+        document.getElementById('zoom-reset-btn').addEventListener('click', () => this.zoomReset());
         
         // Settings modal
         document.getElementById('settings-close-btn').addEventListener('click', () => this.closeSettings());
-        document.querySelectorAll('.size-option-btn').forEach(btn => {
+        
+        // Toolbar size slider
+        const toolbarSizeSlider = document.getElementById('toolbar-size-slider');
+        const toolbarSizeValue = document.getElementById('toolbar-size-value');
+        toolbarSizeSlider.addEventListener('input', (e) => {
+            this.toolbarSize = parseInt(e.target.value);
+            toolbarSizeValue.textContent = this.toolbarSize;
+            this.updateToolbarSize();
+        });
+        
+        // Control position buttons
+        document.querySelectorAll('.position-option-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
-                const size = e.target.dataset.size;
-                this.setButtonSize(size);
+                const position = e.target.dataset.position;
+                this.setControlPosition(position);
             });
+        });
+        
+        // Edge snap checkbox
+        document.getElementById('edge-snap-checkbox').addEventListener('change', (e) => {
+            this.edgeSnapEnabled = e.target.checked;
+            localStorage.setItem('edgeSnapEnabled', this.edgeSnapEnabled);
         });
         
         // Close modal when clicking outside
@@ -153,12 +181,26 @@ class DrawingBoard {
                     this.redo();
                 }
             }
+            // Zoom shortcuts
+            if (e.key === '+' || e.key === '=') {
+                e.preventDefault();
+                this.zoomIn();
+            } else if (e.key === '-' || e.key === '_') {
+                e.preventDefault();
+                this.zoomOut();
+            } else if (e.key === '0') {
+                e.preventDefault();
+                this.zoomReset();
+            }
             // Escape key to close modals
             if (e.key === 'Escape') {
                 this.closeSettings();
                 this.closeConfigPanel();
             }
         });
+        
+        // Draggable panels
+        this.setupDraggablePanels();
         
         // Window resize
         window.addEventListener('resize', () => this.resizeCanvas());
@@ -248,26 +290,17 @@ class DrawingBoard {
         document.getElementById('settings-modal').classList.remove('show');
     }
     
-    setButtonSize(size) {
-        this.buttonSize = size;
-        localStorage.setItem('buttonSize', size);
-        
-        // Update UI
-        const toolbar = document.getElementById('toolbar');
-        toolbar.className = `size-${size}`;
-        
-        // Update active button
-        document.querySelectorAll('.size-option-btn').forEach(btn => {
-            btn.classList.remove('active');
-            if (btn.dataset.size === size) {
-                btn.classList.add('active');
-            }
-        });
-    }
-    
     loadSettings() {
-        // Load button size setting
-        this.setButtonSize(this.buttonSize);
+        // Load toolbar size
+        document.getElementById('toolbar-size-slider').value = this.toolbarSize;
+        document.getElementById('toolbar-size-value').textContent = this.toolbarSize;
+        this.updateToolbarSize();
+        
+        // Load control position
+        this.setControlPosition(this.controlPosition);
+        
+        // Load edge snap setting
+        document.getElementById('edge-snap-checkbox').checked = this.edgeSnapEnabled;
     }
     
     updateUI() {
@@ -356,6 +389,134 @@ class DrawingBoard {
             this.ctx.putImageData(imageData, 0, 0);
             this.updateUI();
         }
+    }
+    
+    // Zoom functions
+    zoomIn() {
+        this.canvasScale = Math.min(this.canvasScale + 0.1, 3.0);
+        this.applyZoom();
+    }
+    
+    zoomOut() {
+        this.canvasScale = Math.max(this.canvasScale - 0.1, 0.5);
+        this.applyZoom();
+    }
+    
+    zoomReset() {
+        this.canvasScale = 1.0;
+        this.applyZoom();
+    }
+    
+    applyZoom() {
+        this.canvas.style.transform = `scale(${this.canvasScale})`;
+        this.canvas.style.transformOrigin = 'center center';
+    }
+    
+    // Toolbar size update
+    updateToolbarSize() {
+        const toolbar = document.getElementById('toolbar');
+        const buttons = toolbar.querySelectorAll('.tool-btn');
+        
+        buttons.forEach(btn => {
+            btn.style.padding = `${this.toolbarSize / 5}px ${this.toolbarSize / 3}px`;
+            btn.style.minWidth = `${this.toolbarSize}px`;
+            
+            const svg = btn.querySelector('svg');
+            if (svg) {
+                const svgSize = this.toolbarSize / 2;
+                svg.style.width = `${svgSize}px`;
+                svg.style.height = `${svgSize}px`;
+            }
+            
+            const span = btn.querySelector('span');
+            if (span) {
+                span.style.fontSize = `${this.toolbarSize / 4.5}px`;
+            }
+        });
+        
+        localStorage.setItem('toolbarSize', this.toolbarSize);
+    }
+    
+    // Control position
+    setControlPosition(position) {
+        this.controlPosition = position;
+        localStorage.setItem('controlPosition', position);
+        
+        const historyControls = document.getElementById('history-controls');
+        historyControls.className = '';
+        historyControls.classList.add(position);
+        
+        // Update active button
+        document.querySelectorAll('.position-option-btn').forEach(btn => {
+            btn.classList.remove('active');
+            if (btn.dataset.position === position) {
+                btn.classList.add('active');
+            }
+        });
+    }
+    
+    // Draggable panels
+    setupDraggablePanels() {
+        const historyControls = document.getElementById('history-controls');
+        const configArea = document.getElementById('config-area');
+        
+        [historyControls, configArea].forEach(element => {
+            element.addEventListener('mousedown', (e) => {
+                // Don't drag if clicking on a button or slider
+                if (e.target.closest('button') || e.target.closest('input')) return;
+                
+                this.isDraggingPanel = true;
+                this.draggedElement = element;
+                
+                const rect = element.getBoundingClientRect();
+                this.dragOffset.x = e.clientX - rect.left;
+                this.dragOffset.y = e.clientY - rect.top;
+                
+                element.classList.add('dragging');
+                element.style.transition = 'none';
+                
+                e.preventDefault();
+            });
+        });
+        
+        document.addEventListener('mousemove', (e) => {
+            if (!this.isDraggingPanel || !this.draggedElement) return;
+            
+            let x = e.clientX - this.dragOffset.x;
+            let y = e.clientY - this.dragOffset.y;
+            
+            // Apply edge snapping if enabled
+            if (this.edgeSnapEnabled) {
+                const snapDistance = 20;
+                const rect = this.draggedElement.getBoundingClientRect();
+                const windowWidth = window.innerWidth;
+                const windowHeight = window.innerHeight;
+                
+                // Snap to left
+                if (x < snapDistance) x = 0;
+                // Snap to right
+                if (x + rect.width > windowWidth - snapDistance) x = windowWidth - rect.width;
+                // Snap to top
+                if (y < snapDistance) y = 0;
+                // Snap to bottom
+                if (y + rect.height > windowHeight - snapDistance) y = windowHeight - rect.height;
+            }
+            
+            this.draggedElement.style.left = `${x}px`;
+            this.draggedElement.style.top = `${y}px`;
+            this.draggedElement.style.transform = 'none';
+            this.draggedElement.style.right = 'auto';
+            this.draggedElement.style.bottom = 'auto';
+        });
+        
+        document.addEventListener('mouseup', () => {
+            if (this.isDraggingPanel && this.draggedElement) {
+                this.draggedElement.classList.remove('dragging');
+                this.draggedElement.style.transition = '';
+                this.isDraggingPanel = false;
+                this.draggedElement = null;
+            }
+        });
     }
 }
 
