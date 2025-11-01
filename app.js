@@ -21,7 +21,7 @@ class DrawingBoard {
         this.toolbarSize = parseInt(localStorage.getItem('toolbarSize')) || 50;
         this.controlPosition = localStorage.getItem('controlPosition') || 'top-right';
         this.edgeSnapEnabled = localStorage.getItem('edgeSnapEnabled') !== 'false';
-        this.canvasScale = 1.0;
+        this.canvasScale = parseFloat(localStorage.getItem('canvasScale')) || 1.0;
         
         // Dragging state
         this.isDraggingPanel = false;
@@ -208,9 +208,10 @@ class DrawingBoard {
     
     getPosition(e) {
         const rect = this.canvas.getBoundingClientRect();
+        // Account for canvas scaling
         return {
-            x: e.clientX - rect.left,
-            y: e.clientY - rect.top
+            x: (e.clientX - rect.left) / this.canvasScale,
+            y: (e.clientY - rect.top) / this.canvasScale
         };
     }
     
@@ -301,6 +302,9 @@ class DrawingBoard {
         
         // Load edge snap setting
         document.getElementById('edge-snap-checkbox').checked = this.edgeSnapEnabled;
+        
+        // Load canvas scale
+        this.applyZoom();
     }
     
     updateUI() {
@@ -410,6 +414,7 @@ class DrawingBoard {
     applyZoom() {
         this.canvas.style.transform = `scale(${this.canvasScale})`;
         this.canvas.style.transformOrigin = 'center center';
+        localStorage.setItem('canvasScale', this.canvasScale);
     }
     
     // Toolbar size update
