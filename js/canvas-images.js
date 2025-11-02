@@ -151,14 +151,21 @@ class CanvasImageManager {
     updateSelectionBox(image) {
         const rect = this.canvas.getBoundingClientRect();
         
-        // Calculate position accounting for canvas transforms
-        const x = rect.left + image.x;
-        const y = rect.top + image.y;
+        // Get the canvas scale from computed transform
+        const computedStyle = window.getComputedStyle(this.canvas);
+        const matrix = new DOMMatrix(computedStyle.transform);
+        const canvasScale = matrix.a; // Scale factor from transform matrix
         
-        this.selectionBox.style.left = `${x}px`;
-        this.selectionBox.style.top = `${y}px`;
-        this.selectionBox.style.width = `${image.width}px`;
-        this.selectionBox.style.height = `${image.height}px`;
+        // Calculate position accounting for canvas transforms
+        const actualX = rect.left + (image.x * canvasScale);
+        const actualY = rect.top + (image.y * canvasScale);
+        const actualWidth = image.width * canvasScale;
+        const actualHeight = image.height * canvasScale;
+        
+        this.selectionBox.style.left = `${actualX}px`;
+        this.selectionBox.style.top = `${actualY}px`;
+        this.selectionBox.style.width = `${actualWidth}px`;
+        this.selectionBox.style.height = `${actualHeight}px`;
         this.selectionBox.style.transform = `rotate(${image.rotation}deg)`;
     }
     
