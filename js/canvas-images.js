@@ -170,13 +170,21 @@ class CanvasImageManager {
     }
     
     getImageAtPoint(x, y) {
+        // Adjust coordinates for canvas scale (same as drawing engine)
+        const rect = this.canvas.getBoundingClientRect();
+        const scaleX = this.canvas.offsetWidth / rect.width;
+        const scaleY = this.canvas.offsetHeight / rect.height;
+        
+        const adjustedX = x * scaleX;
+        const adjustedY = y * scaleY;
+        
         // Check images in reverse order (top to bottom)
         for (let i = this.images.length - 1; i >= 0; i--) {
             const img = this.images[i];
             
             // Simple bounding box check (ignoring rotation for now)
-            if (x >= img.x && x <= img.x + img.width &&
-                y >= img.y && y <= img.y + img.height) {
+            if (adjustedX >= img.x && adjustedX <= img.x + img.width &&
+                adjustedY >= img.y && adjustedY <= img.y + img.height) {
                 return img.id;
             }
         }
