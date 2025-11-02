@@ -39,6 +39,9 @@ class DrawingBoard {
         this.draggedElementWidth = 0;
         this.draggedElementHeight = 0;
         
+        // Uploaded images storage
+        this.uploadedImages = this.loadUploadedImages();
+        
         // Initialize
         this.resizeCanvas();
         this.setupEventListeners();
@@ -50,6 +53,7 @@ class DrawingBoard {
         this.applyZoom();
         this.updateZoomControlsVisibility();
         this.updatePatternGrid();
+        this.updateUploadedImagesButtons();
     }
     
     resizeCanvas() {
@@ -299,17 +303,21 @@ class DrawingBoard {
             if (file) {
                 const reader = new FileReader();
                 reader.onload = (event) => {
-                    this.backgroundManager.setBackgroundImage(event.target.result);
+                    const imageData = event.target.result;
+                    this.backgroundManager.setBackgroundImage(imageData);
                     document.querySelectorAll('.pattern-option-btn').forEach(b => b.classList.remove('active'));
                     document.querySelector('.pattern-option-btn[data-pattern="image"]').classList.add('active');
                     document.getElementById('image-size-group').style.display = 'flex';
                     // Hide pattern density when image is uploaded
                     document.getElementById('pattern-density-group').style.display = 'none';
                     
+                    // Save uploaded image
+                    this.saveUploadedImage(imageData);
+                    
                     // Show image controls for manipulation
-                    const imageData = this.backgroundManager.getImageData();
-                    if (imageData) {
-                        this.imageControls.showControls(imageData);
+                    const imgData = this.backgroundManager.getImageData();
+                    if (imgData) {
+                        this.imageControls.showControls(imgData);
                     }
                 };
                 reader.readAsDataURL(file);
@@ -648,6 +656,10 @@ class DrawingBoard {
             } else {
                 this.draggedElement.classList.remove('vertical');
             }
+            
+            // Constrain to viewport boundaries (prevent overflow)
+            x = Math.max(0, Math.min(x, windowWidth - this.draggedElement.getBoundingClientRect().width));
+            y = Math.max(0, Math.min(y, windowHeight - this.draggedElement.getBoundingClientRect().height));
             
             this.draggedElement.style.left = `${x}px`;
             this.draggedElement.style.top = `${y}px`;
@@ -1204,6 +1216,55 @@ class DrawingBoard {
         this.ctx.translate(this.drawingEngine.panOffset.x, this.drawingEngine.panOffset.y);
         this.ctx.drawImage(tempCanvas, 0, 0, this.canvas.width / dpr, this.canvas.height / dpr);
         this.ctx.restore();
+    }
+    
+    loadUploadedImages() {
+        const saved = localStorage.getItem('uploadedImages');
+        if (saved) {
+            try {
+                return JSON.parse(saved);
+            } catch (e) {
+                return [];
+            }
+        }
+        return [];
+    }
+    
+    saveUploadedImage(imageData) {
+        const imageId = `img_${Date.now()}`;
+        this.uploadedImages.push({
+            id: imageId,
+            data: imageData,
+            name: `图片${this.uploadedImages.length + 1}`
+        });
+        localStorage.setItem('uploadedImages', JSON.stringify(this.uploadedImages));
+        this.updateUploadedImagesButtons();
+    }
+    
+    updateUploadedImagesButtons() {
+        const patternGrid = document.getElementById('pattern-grid');
+        
+        // Remove existing uploaded image buttons
+        patternGrid.querySelectorAll('.uploaded-image-btn').forEach(btn => btn.remove());
+        
+        // Add buttons for each uploaded image
+        this.uploadedImages.forEach((image, index) => {
+            const btn = document.createElement('button');
+            btn.className = 'pattern-option-btn uploaded-image-btn';
+            btn.dataset.imageId = image.id;
+            btn.textContent = image.name;
+            btn.addEventListener('click', () => {
+                this.backgroundManager.setBackgroundImage(image.data);
+                document.querySelectorAll('.pattern-option-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                document.getElementById('image-size-group').style.display = 'flex';
+                document.getElementById('pattern-density-group').style.display = 'none';
+            });
+            
+            // Insert before the upload button
+            const uploadBtn = patternGrid.querySelector('#image-pattern-btn');
+            patternGrid.insertBefore(btn, uploadBtn);
+        });
     }
 }
 
