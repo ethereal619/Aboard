@@ -20,6 +20,8 @@ class DrawingBoard {
         this.historyManager = new HistoryManager(this.canvas, this.ctx);
         this.backgroundManager = new BackgroundManager(this.bgCanvas, this.bgCtx);
         this.imageControls = new ImageControls(this.backgroundManager);
+        this.canvasImageManager = new CanvasImageManager(this.canvas, this.ctx);
+        this.selectionManager = new SelectionManager(this.canvas, this.ctx, this.canvasImageManager);
         this.settingsManager = new SettingsManager();
         
         // Pagination
@@ -120,6 +122,11 @@ class DrawingBoard {
         }
         
         this.backgroundManager.drawBackground();
+        
+        // Redraw canvas images if any
+        if (this.canvasImageManager) {
+            this.canvasImageManager.drawImages();
+        }
     }
     
     setupEventListeners() {
@@ -130,13 +137,20 @@ class DrawingBoard {
                 e.target.closest('#config-area') || 
                 e.target.closest('#history-controls') || 
                 e.target.closest('#pagination-controls') ||
-                e.target.closest('.modal')) {
+                e.target.closest('.modal') ||
+                e.target.closest('.canvas-image-selection')) {
                 return;
             }
             
             // Auto-switch to pen mode if currently in background mode
             if (this.drawingEngine.currentTool === 'background') {
                 this.setTool('pen', false); // Don't show config panel
+            }
+            
+            // Handle selection tool
+            if (this.drawingEngine.currentTool === 'select') {
+                this.selectionManager.startSelection(e);
+                return;
             }
             
             if (e.button === 1 || (e.button === 0 && e.shiftKey) || this.drawingEngine.currentTool === 'pan') {
@@ -218,8 +232,10 @@ class DrawingBoard {
         
         // Toolbar buttons
         document.getElementById('pen-btn').addEventListener('click', () => this.setTool('pen'));
+        document.getElementById('select-btn').addEventListener('click', () => this.setTool('select'));
         document.getElementById('pan-btn').addEventListener('click', () => this.setTool('pan'));
         document.getElementById('eraser-btn').addEventListener('click', () => this.setTool('eraser'));
+        document.getElementById('insert-btn').addEventListener('click', () => this.setTool('insert'));
         document.getElementById('background-btn').addEventListener('click', () => this.setTool('background'));
         document.getElementById('clear-btn').addEventListener('click', () => this.confirmClear());
         document.getElementById('settings-btn').addEventListener('click', () => this.openSettings());
@@ -420,6 +436,43 @@ class DrawingBoard {
             if (this.drawingEngine.currentTool === 'eraser') {
                 this.eraserCursor.style.width = e.target.value + 'px';
                 this.eraserCursor.style.height = e.target.value + 'px';
+            }
+        });
+        
+        // Insert image button
+        document.getElementById('insert-image-btn').addEventListener('click', () => {
+            document.getElementById('insert-image-upload').click();
+        });
+        
+        document.getElementById('insert-image-upload').addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    const imageData = event.target.result;
+                    // Insert image at center of canvas
+                    const rect = this.canvas.getBoundingClientRect();
+                    const centerX = rect.width / 2 - 100;
+                    const centerY = rect.height / 2 - 100;
+                    this.canvasImageManager.addImage(imageData, centerX, centerY);
+                    this.historyManager.saveState();
+                };
+                reader.readAsDataURL(file);
+            }
+            // Reset file input
+            e.target.value = '';
+        });
+        
+        // Selection tool buttons
+        document.getElementById('select-copy-btn').addEventListener('click', () => {
+            if (this.selectionManager.copySelection()) {
+                this.historyManager.saveState();
+            }
+        });
+        
+        document.getElementById('select-delete-btn').addEventListener('click', () => {
+            if (this.selectionManager.deleteSelection()) {
+                this.historyManager.saveState();
             }
         });
     }
@@ -745,9 +798,15 @@ class DrawingBoard {
         } else {
             this.hideEraserCursor();
         }
+        
+        // Clear selection when switching away from select tool
+        if (tool !== 'select') {
+            this.selectionManager.clearSelection();
+        }
+        
         this.updateUI();
         
-        if (showConfig && (tool === 'pen' || tool === 'eraser' || tool === 'background')) {
+        if (showConfig && (tool === 'pen' || tool === 'eraser' || tool === 'background' || tool === 'insert' || tool === 'select')) {
             document.getElementById('config-area').classList.add('show');
         }
     }
@@ -796,6 +855,14 @@ class DrawingBoard {
             document.getElementById('pen-btn').classList.add('active');
             document.getElementById('pen-config').classList.add('active');
             this.canvas.style.cursor = 'crosshair';
+        } else if (tool === 'select') {
+            document.getElementById('select-btn').classList.add('active');
+            document.getElementById('select-config').classList.add('active');
+            this.canvas.style.cursor = 'default';
+            // Update selection buttons state
+            const hasSelection = this.selectionManager.hasSelection();
+            document.getElementById('select-copy-btn').disabled = !hasSelection;
+            document.getElementById('select-delete-btn').disabled = !hasSelection;
         } else if (tool === 'pan') {
             document.getElementById('pan-btn').classList.add('active');
             this.canvas.style.cursor = 'grab';
@@ -803,6 +870,10 @@ class DrawingBoard {
             document.getElementById('eraser-btn').classList.add('active');
             document.getElementById('eraser-config').classList.add('active');
             this.canvas.style.cursor = 'pointer';
+        } else if (tool === 'insert') {
+            document.getElementById('insert-btn').classList.add('active');
+            document.getElementById('insert-config').classList.add('active');
+            this.canvas.style.cursor = 'default';
         } else if (tool === 'background') {
             document.getElementById('background-btn').classList.add('active');
             document.getElementById('background-config').classList.add('active');
