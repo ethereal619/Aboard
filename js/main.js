@@ -79,39 +79,51 @@ class DrawingBoard {
     }
     
     setupEventListeners() {
-        // Canvas drawing events
-        this.canvas.addEventListener('mousedown', (e) => {
+        // Canvas drawing events - use document-level listeners for continuous drawing
+        document.addEventListener('mousedown', (e) => {
+            // Skip if clicking on UI elements (except canvas)
+            if (e.target.closest('#toolbar') || 
+                e.target.closest('#config-area') || 
+                e.target.closest('#history-controls') || 
+                e.target.closest('#pagination-controls') ||
+                e.target.closest('.modal')) {
+                return;
+            }
+            
             if (e.button === 1 || (e.button === 0 && e.shiftKey)) {
                 this.drawingEngine.startPanning(e);
-            } else {
+            } else if (this.drawingEngine.currentTool === 'pen' || this.drawingEngine.currentTool === 'eraser') {
                 this.drawingEngine.startDrawing(e);
             }
         });
         
-        this.canvas.addEventListener('mousemove', (e) => {
+        document.addEventListener('mousemove', (e) => {
             if (this.drawingEngine.isPanning) {
                 this.drawingEngine.pan(e);
                 this.redrawCanvas();
-            } else {
+            } else if (this.drawingEngine.isDrawing) {
                 this.drawingEngine.draw(e);
+                this.updateEraserCursor(e);
+            } else {
                 this.updateEraserCursor(e);
             }
         });
         
-        this.canvas.addEventListener('mouseup', () => {
+        document.addEventListener('mouseup', () => {
             this.handleDrawingComplete();
             this.drawingEngine.stopPanning();
-        });
-        
-        this.canvas.addEventListener('mouseout', () => {
-            this.handleDrawingComplete();
-            this.drawingEngine.stopPanning();
-            this.hideEraserCursor();
         });
         
         this.canvas.addEventListener('mouseenter', (e) => {
             if (this.drawingEngine.currentTool === 'eraser') {
                 this.showEraserCursor();
+            }
+        });
+        
+        this.canvas.addEventListener('mouseleave', () => {
+            // Don't hide eraser cursor if we're still drawing
+            if (!this.drawingEngine.isDrawing) {
+                this.hideEraserCursor();
             }
         });
         
