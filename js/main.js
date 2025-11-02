@@ -39,6 +39,9 @@ class DrawingBoard {
         this.draggedElementWidth = 0;
         this.draggedElementHeight = 0;
         
+        // Uploaded images storage
+        this.uploadedImages = this.loadUploadedImages();
+        
         // Initialize
         this.resizeCanvas();
         this.setupEventListeners();
@@ -50,6 +53,7 @@ class DrawingBoard {
         this.applyZoom();
         this.updateZoomControlsVisibility();
         this.updatePatternGrid();
+        this.updateUploadedImagesButtons();
     }
     
     resizeCanvas() {
@@ -98,7 +102,7 @@ class DrawingBoard {
                 this.setTool('pen', false); // Don't show config panel
             }
             
-            if (e.button === 1 || (e.button === 0 && e.shiftKey)) {
+            if (e.button === 1 || (e.button === 0 && e.shiftKey) || this.drawingEngine.currentTool === 'pan') {
                 this.drawingEngine.startPanning(e);
             } else if (this.drawingEngine.currentTool === 'pen' || this.drawingEngine.currentTool === 'eraser') {
                 this.drawingEngine.startDrawing(e);
@@ -177,6 +181,7 @@ class DrawingBoard {
         
         // Toolbar buttons
         document.getElementById('pen-btn').addEventListener('click', () => this.setTool('pen'));
+        document.getElementById('pan-btn').addEventListener('click', () => this.setTool('pan'));
         document.getElementById('eraser-btn').addEventListener('click', () => this.setTool('eraser'));
         document.getElementById('background-btn').addEventListener('click', () => this.setTool('background'));
         document.getElementById('clear-btn').addEventListener('click', () => this.confirmClear());
@@ -298,17 +303,21 @@ class DrawingBoard {
             if (file) {
                 const reader = new FileReader();
                 reader.onload = (event) => {
-                    this.backgroundManager.setBackgroundImage(event.target.result);
+                    const imageData = event.target.result;
+                    this.backgroundManager.setBackgroundImage(imageData);
                     document.querySelectorAll('.pattern-option-btn').forEach(b => b.classList.remove('active'));
                     document.querySelector('.pattern-option-btn[data-pattern="image"]').classList.add('active');
                     document.getElementById('image-size-group').style.display = 'flex';
                     // Hide pattern density when image is uploaded
                     document.getElementById('pattern-density-group').style.display = 'none';
                     
+                    // Save uploaded image
+                    this.saveUploadedImage(imageData);
+                    
                     // Show image controls for manipulation
-                    const imageData = this.backgroundManager.getImageData();
-                    if (imageData) {
-                        this.imageControls.showControls(imageData);
+                    const imgData = this.backgroundManager.getImageData();
+                    if (imgData) {
+                        this.imageControls.showControls(imgData);
                     }
                 };
                 reader.readAsDataURL(file);
@@ -432,6 +441,7 @@ class DrawingBoard {
                 this.settingsManager.setCanvasPreset(preset);
                 document.querySelectorAll('.canvas-preset-btn').forEach(b => b.classList.remove('active'));
                 e.target.classList.add('active');
+                this.applyCanvasSize();
             });
         });
         
@@ -443,6 +453,7 @@ class DrawingBoard {
             // Set to custom when manually changing size
             document.querySelectorAll('.canvas-preset-btn').forEach(b => b.classList.remove('active'));
             document.querySelector('.canvas-preset-btn[data-preset="custom"]').classList.add('active');
+            this.applyCanvasSize();
         });
         
         document.getElementById('canvas-height-input').addEventListener('change', (e) => {
@@ -452,6 +463,7 @@ class DrawingBoard {
             // Set to custom when manually changing size
             document.querySelectorAll('.canvas-preset-btn').forEach(b => b.classList.remove('active'));
             document.querySelector('.canvas-preset-btn[data-preset="custom"]').classList.add('active');
+            this.applyCanvasSize();
         });
         
         // Canvas ratio selector
@@ -645,6 +657,10 @@ class DrawingBoard {
                 this.draggedElement.classList.remove('vertical');
             }
             
+            // Constrain to viewport boundaries (prevent overflow)
+            x = Math.max(0, Math.min(x, windowWidth - this.draggedElement.getBoundingClientRect().width));
+            y = Math.max(0, Math.min(y, windowHeight - this.draggedElement.getBoundingClientRect().height));
+            
             this.draggedElement.style.left = `${x}px`;
             this.draggedElement.style.top = `${y}px`;
             this.draggedElement.style.transform = 'none';
@@ -720,6 +736,9 @@ class DrawingBoard {
             document.getElementById('pen-btn').classList.add('active');
             document.getElementById('pen-config').classList.add('active');
             this.canvas.style.cursor = 'crosshair';
+        } else if (tool === 'pan') {
+            document.getElementById('pan-btn').classList.add('active');
+            this.canvas.style.cursor = 'grab';
         } else if (tool === 'eraser') {
             document.getElementById('eraser-btn').classList.add('active');
             document.getElementById('eraser-config').classList.add('active');
@@ -743,11 +762,77 @@ class DrawingBoard {
     
     updateCanvasMode() {
         this.updateUI();
+        this.applyCanvasSize();
         // Initialize pages array if needed
         if (!this.settingsManager.infiniteCanvas && this.pages.length === 0) {
             this.pages.push(this.ctx.getImageData(0, 0, this.canvas.width, this.canvas.height));
             this.currentPage = 1;
             this.updatePaginationUI();
+        }
+    }
+    
+    applyCanvasSize() {
+        if (!this.settingsManager.infiniteCanvas) {
+            // In paginated mode, apply custom canvas size
+            const width = this.settingsManager.canvasWidth;
+            const height = this.settingsManager.canvasHeight;
+            const dpr = window.devicePixelRatio || 1;
+            
+            // Save current content
+            const oldWidth = this.canvas.width;
+            const oldHeight = this.canvas.height;
+            const imageData = this.historyManager.historyStep >= 0 ? 
+                this.ctx.getImageData(0, 0, oldWidth, oldHeight) : null;
+            
+            // Set canvas size and CSS size
+            this.canvas.width = width * dpr;
+            this.canvas.height = height * dpr;
+            this.canvas.style.width = width + 'px';
+            this.canvas.style.height = height + 'px';
+            
+            this.bgCanvas.width = width * dpr;
+            this.bgCanvas.height = height * dpr;
+            this.bgCanvas.style.width = width + 'px';
+            this.bgCanvas.style.height = height + 'px';
+            
+            // Center the canvas on the screen
+            this.canvas.style.position = 'absolute';
+            this.canvas.style.left = '50%';
+            this.canvas.style.top = '50%';
+            this.canvas.style.transform = `translate(-50%, -50%) scale(${this.drawingEngine.canvasScale})`;
+            
+            this.bgCanvas.style.position = 'absolute';
+            this.bgCanvas.style.left = '50%';
+            this.bgCanvas.style.top = '50%';
+            this.bgCanvas.style.transform = `translate(-50%, -50%) scale(${this.drawingEngine.canvasScale})`;
+            
+            // Re-apply DPR scaling to context
+            this.ctx.scale(dpr, dpr);
+            this.bgCtx.scale(dpr, dpr);
+            
+            // Restore content
+            if (imageData) {
+                this.ctx.putImageData(imageData, 0, 0);
+            }
+            
+            this.backgroundManager.drawBackground();
+        } else {
+            // In infinite canvas mode, canvas fills the viewport
+            this.canvas.style.position = 'absolute';
+            this.canvas.style.left = '0';
+            this.canvas.style.top = '0';
+            this.canvas.style.width = '100%';
+            this.canvas.style.height = '100%';
+            this.canvas.style.transform = `scale(${this.drawingEngine.canvasScale})`;
+            
+            this.bgCanvas.style.position = 'absolute';
+            this.bgCanvas.style.left = '0';
+            this.bgCanvas.style.top = '0';
+            this.bgCanvas.style.width = '100%';
+            this.bgCanvas.style.height = '100%';
+            this.bgCanvas.style.transform = `scale(${this.drawingEngine.canvasScale})`;
+            
+            this.resizeCanvas();
         }
     }
     
@@ -786,9 +871,17 @@ class DrawingBoard {
     
     applyZoom() {
         // Apply zoom using CSS transform for better performance
-        const transform = `scale(${this.drawingEngine.canvasScale})`;
-        this.canvas.style.transform = transform;
-        this.bgCanvas.style.transform = transform;
+        if (!this.settingsManager.infiniteCanvas) {
+            // In paginated mode, keep centering
+            const transform = `translate(-50%, -50%) scale(${this.drawingEngine.canvasScale})`;
+            this.canvas.style.transform = transform;
+            this.bgCanvas.style.transform = transform;
+        } else {
+            // In infinite mode, simple scale
+            const transform = `scale(${this.drawingEngine.canvasScale})`;
+            this.canvas.style.transform = transform;
+            this.bgCanvas.style.transform = transform;
+        }
         this.canvas.style.transformOrigin = 'center center';
         this.bgCanvas.style.transformOrigin = 'center center';
     }
@@ -1123,6 +1216,74 @@ class DrawingBoard {
         this.ctx.translate(this.drawingEngine.panOffset.x, this.drawingEngine.panOffset.y);
         this.ctx.drawImage(tempCanvas, 0, 0, this.canvas.width / dpr, this.canvas.height / dpr);
         this.ctx.restore();
+    }
+    
+    loadUploadedImages() {
+        const saved = localStorage.getItem('uploadedImages');
+        if (saved) {
+            try {
+                return JSON.parse(saved);
+            } catch (e) {
+                console.warn('Failed to load uploaded images from localStorage:', e);
+                localStorage.removeItem('uploadedImages');
+                return [];
+            }
+        }
+        return [];
+    }
+    
+    saveUploadedImage(imageData) {
+        // Check if we're approaching localStorage limit
+        const currentSize = new Blob([localStorage.getItem('uploadedImages') || '[]']).size;
+        const imageSize = new Blob([imageData]).size;
+        
+        // Limit to approximately 4MB total to avoid hitting localStorage limits
+        if (currentSize + imageSize > 4 * 1024 * 1024) {
+            alert('存储空间不足，无法保存更多图片。请清除一些旧图片。');
+            return;
+        }
+        
+        const imageId = `img_${Date.now()}`;
+        this.uploadedImages.push({
+            id: imageId,
+            data: imageData,
+            name: `图片${this.uploadedImages.length + 1}`
+        });
+        
+        try {
+            localStorage.setItem('uploadedImages', JSON.stringify(this.uploadedImages));
+            this.updateUploadedImagesButtons();
+        } catch (e) {
+            console.error('Failed to save image to localStorage:', e);
+            alert('保存图片失败，存储空间可能不足。');
+            this.uploadedImages.pop(); // Remove the image we just added
+        }
+    }
+    
+    updateUploadedImagesButtons() {
+        const patternGrid = document.getElementById('pattern-grid');
+        
+        // Remove existing uploaded image buttons
+        patternGrid.querySelectorAll('.uploaded-image-btn').forEach(btn => btn.remove());
+        
+        // Add buttons for each uploaded image
+        this.uploadedImages.forEach((image, index) => {
+            const btn = document.createElement('button');
+            btn.className = 'pattern-option-btn uploaded-image-btn';
+            btn.dataset.imageId = image.id;
+            btn.textContent = image.name;
+            btn.addEventListener('click', () => {
+                this.backgroundManager.setBackgroundImage(image.data);
+                document.querySelectorAll('.pattern-option-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                document.getElementById('image-size-group').style.display = 'flex';
+                document.getElementById('pattern-density-group').style.display = 'none';
+            });
+            
+            // Insert before the upload button
+            const uploadBtn = patternGrid.querySelector('#image-pattern-btn');
+            patternGrid.insertBefore(btn, uploadBtn);
+        });
     }
 }
 
