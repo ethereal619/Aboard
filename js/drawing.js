@@ -22,6 +22,8 @@ class DrawingEngine {
         // Stroke storage for selection
         this.strokes = [];
         this.selectedStrokeIndex = null;
+        this.SELECTION_THRESHOLD = 10; // Distance threshold for stroke selection
+        this.COPY_OFFSET = 20; // Offset for copied strokes
         
         // Canvas scaling and panning
         this.canvasScale = parseFloat(localStorage.getItem('canvasScale')) || 1.0;
@@ -227,7 +229,11 @@ class DrawingEngine {
     }
     
     // Stroke selection methods
-    findStrokeAtPoint(x, y, threshold = 10) {
+    findStrokeAtPoint(x, y, threshold = null) {
+        // Use default threshold if not specified
+        if (threshold === null) {
+            threshold = this.SELECTION_THRESHOLD;
+        }
         // Search strokes in reverse order (most recent first)
         for (let i = this.strokes.length - 1; i >= 0; i--) {
             const stroke = this.strokes[i];
@@ -334,7 +340,7 @@ class DrawingEngine {
         
         // Create a copy with offset
         const copiedStroke = {
-            points: stroke.points.map(p => ({ x: p.x + 20, y: p.y + 20 })),
+            points: stroke.points.map(p => ({ x: p.x + this.COPY_OFFSET, y: p.y + this.COPY_OFFSET })),
             color: stroke.color,
             size: stroke.size,
             penType: stroke.penType,
