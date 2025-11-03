@@ -144,15 +144,30 @@ class ImageControls {
         const originalWidth = imageData.width || rect.width * 0.6;
         const originalHeight = imageData.height || rect.height * 0.6;
         
-        // Center the image initially
-        this.imageSize.width = originalWidth;
-        this.imageSize.height = originalHeight;
+        // Check if there's an existing transform from backgroundManager
+        const existingTransform = this.backgroundManager.imageTransform;
+        
+        // Use existing transform if available and valid, otherwise center the image initially
+        if (existingTransform && existingTransform.width > 0 && existingTransform.height > 0) {
+            // Use the existing transform to preserve current state
+            this.imageSize.width = existingTransform.width;
+            this.imageSize.height = existingTransform.height;
+            this.imagePosition.x = existingTransform.x;
+            this.imagePosition.y = existingTransform.y;
+            this.imageRotation = existingTransform.rotation || 0;
+            this.imageScale = existingTransform.scale || 1.0;
+        } else {
+            // Center the image initially (first time showing controls)
+            this.imageSize.width = originalWidth;
+            this.imageSize.height = originalHeight;
+            this.imagePosition.x = (rect.width - this.imageSize.width) / 2;
+            this.imagePosition.y = (rect.height - this.imageSize.height) / 2;
+            this.imageRotation = 0;
+            this.imageScale = 1.0;
+        }
+        
         this.originalWidth = originalWidth;
         this.originalHeight = originalHeight;
-        this.imagePosition.x = (rect.width - this.imageSize.width) / 2;
-        this.imagePosition.y = (rect.height - this.imageSize.height) / 2;
-        this.imageRotation = 0;
-        this.imageScale = 1.0;
         
         this.updateControlBox();
     }
