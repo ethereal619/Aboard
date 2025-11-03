@@ -268,7 +268,6 @@ class BackgroundManager {
     }
     
     drawCoordinatePattern(dpr, patternColor) {
-        const dprInverse = 1 / dpr;
         const centerX = (this.bgCanvas.width / 2) + (this.coordinateOriginX * dpr);
         const centerY = (this.bgCanvas.height / 2) + (this.coordinateOriginY * dpr);
         const baseGridSize = 20 * dpr;
