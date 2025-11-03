@@ -17,6 +17,34 @@ class SelectionManager {
 
         // For lasso/rectangle selection (future enhancement)
         this.selectionMode = 'click'; // 'click' or 'rectangle'
+
+        // Bind event listeners to ensure proper scope
+        this.canvas.addEventListener('mousedown', (e) => this.handleMouseDown(e));
+        this.canvas.addEventListener('mousemove', (e) => this.handleMouseMove(e));
+        this.canvas.addEventListener('mouseup', (e) => this.handleMouseUp(e));
+    }
+
+    handleMouseDown(e) {
+        // Ensure the event is within the canvas bounds
+        if (!this.isEventOnCanvas(e)) return;
+        this.startSelection(e);
+    }
+
+    handleMouseMove(e) {
+        if (!this.isSelecting) return;
+        this.continueSelection(e);
+    }
+
+    handleMouseUp(e) {
+        if (!this.isSelecting) return;
+        this.endSelection();
+    }
+
+    isEventOnCanvas(e) {
+        const rect = this.canvas.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        return x >= 0 && y >= 0 && x <= rect.width && y <= rect.height;
     }
 
     startSelection(e) {
@@ -31,7 +59,7 @@ class SelectionManager {
             this.canvasImageManager.selectImage(imageId);
             this.selectedImage = imageId;
             this.selectedText = null; // Deselect text
-            return true;
+            return;
         }
 
         // Check if clicked on text
@@ -40,24 +68,14 @@ class SelectionManager {
             this.textManager.selectText(textId);
             this.selectedText = textId;
             this.selectedImage = null; // Deselect image
-            return true;
+            return;
         }
 
         // If not on image or text, deselect
-        this.canvasImageManager.deselectImage();
-        this.textManager.deselectText();
-        this.selectedImage = null;
-        this.selectedText = null;
-
-        // For future: stroke selection
-        // this.selectionStart = { x, y };
-
-        return false;
+        this.clearSelection();
     }
 
     continueSelection(e) {
-        if (!this.isSelecting) return;
-
         const rect = this.canvas.getBoundingClientRect();
         const x = e.clientX - rect.left;
         const y = e.clientY - rect.top;
