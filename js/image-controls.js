@@ -168,6 +168,9 @@ class ImageControls {
         this.hideControls();
         // Save the confirmed state to localStorage
         localStorage.setItem('backgroundImageConfirmed', 'true');
+        
+        // Dispatch event to notify that image has been confirmed
+        window.dispatchEvent(new CustomEvent('imageConfirmed'));
     }
     
     resetConfirmation() {
