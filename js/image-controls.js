@@ -224,8 +224,14 @@ class ImageControls {
     drag(e) {
         if (!this.isDragging) return;
         
-        const deltaX = e.clientX - this.dragStartPos.x;
-        const deltaY = e.clientY - this.dragStartPos.y;
+        // Get canvas scale to convert screen coordinates to canvas coordinates
+        const canvas = this.backgroundManager.bgCanvas;
+        const computedStyle = window.getComputedStyle(canvas);
+        const matrix = new DOMMatrix(computedStyle.transform);
+        const canvasScale = matrix.a || 1;
+        
+        const deltaX = (e.clientX - this.dragStartPos.x) / canvasScale;
+        const deltaY = (e.clientY - this.dragStartPos.y) / canvasScale;
         
         this.imagePosition.x = this.dragStartImagePos.x + deltaX;
         this.imagePosition.y = this.dragStartImagePos.y + deltaY;
@@ -249,8 +255,14 @@ class ImageControls {
     resize(e) {
         if (!this.isResizing) return;
         
-        const deltaX = e.clientX - this.resizeStartPos.x;
-        const deltaY = e.clientY - this.resizeStartPos.y;
+        // Get canvas scale to convert screen coordinates to canvas coordinates
+        const canvas = this.backgroundManager.bgCanvas;
+        const computedStyle = window.getComputedStyle(canvas);
+        const matrix = new DOMMatrix(computedStyle.transform);
+        const canvasScale = matrix.a || 1;
+        
+        const deltaX = (e.clientX - this.resizeStartPos.x) / canvasScale;
+        const deltaY = (e.clientY - this.resizeStartPos.y) / canvasScale;
         
         const aspectRatio = this.resizeStartSize.width / this.resizeStartSize.height;
         
