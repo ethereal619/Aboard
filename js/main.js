@@ -103,7 +103,10 @@ class DrawingBoard {
     }
     
     resizeCanvas() {
-        const rect = this.canvas.getBoundingClientRect();
+        // 获取窗口尺寸而不是当前canvas的尺寸，避免缩放导致canvas消失
+        // Get window size instead of current canvas size to avoid canvas disappearing due to scaling
+        const windowWidth = window.innerWidth;
+        const windowHeight = window.innerHeight;
         const dpr = window.devicePixelRatio || 1;
         
         const oldWidth = this.canvas.width;
@@ -111,15 +114,17 @@ class DrawingBoard {
         const imageData = this.historyManager.historyStep >= 0 ? 
             this.ctx.getImageData(0, 0, oldWidth, oldHeight) : null;
         
-        this.canvas.width = rect.width * dpr;
-        this.canvas.height = rect.height * dpr;
-        this.canvas.style.width = rect.width + 'px';
-        this.canvas.style.height = rect.height + 'px';
+        // 使用窗口尺寸设置canvas大小，确保canvas始终占据整个窗口
+        // Use window size to set canvas size, ensuring canvas always fills the window
+        this.canvas.width = windowWidth * dpr;
+        this.canvas.height = windowHeight * dpr;
+        this.canvas.style.width = windowWidth + 'px';
+        this.canvas.style.height = windowHeight + 'px';
         
-        this.bgCanvas.width = rect.width * dpr;
-        this.bgCanvas.height = rect.height * dpr;
-        this.bgCanvas.style.width = rect.width + 'px';
-        this.bgCanvas.style.height = rect.height + 'px';
+        this.bgCanvas.width = windowWidth * dpr;
+        this.bgCanvas.height = windowHeight * dpr;
+        this.bgCanvas.style.width = windowWidth + 'px';
+        this.bgCanvas.style.height = windowHeight + 'px';
         
         this.ctx.scale(dpr, dpr);
         this.bgCtx.scale(dpr, dpr);
@@ -141,12 +146,44 @@ class DrawingBoard {
         document.addEventListener('mousedown', (e) => {
             // Skip if clicking on UI elements (except canvas)
             if (e.target && e.target.closest) {
+                // 如果正在编辑笔迹，点击工具栏或属性栏时自动保存
+                // If editing stroke, auto-save when clicking toolbar or config area
+                if (this.strokeControls.isActive && 
+                    (e.target.closest('#toolbar') || e.target.closest('#config-area'))) {
+                    this.strokeControls.hideControls();
+                    if (this.historyManager) {
+                        this.historyManager.saveState();
+                    }
+                }
+                
                 if (e.target.closest('#toolbar') || 
                     e.target.closest('#config-area') || 
                     e.target.closest('#history-controls') || 
                     e.target.closest('#pagination-controls') ||
                     e.target.closest('.modal') ||
                     e.target.closest('.canvas-image-selection')) {
+                    return;
+                }
+            }
+            
+            // 如果正在编辑笔迹，点击画布其他位置时自动保存并切换到笔模式
+            // If editing stroke and clicking elsewhere on canvas, auto-save and switch to pen tool
+            if (this.strokeControls.isActive) {
+                const rect = this.canvas.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                
+                // Check if clicking inside the stroke controls overlay
+                const strokeControlsOverlay = document.getElementById('stroke-controls-overlay');
+                if (!strokeControlsOverlay || !e.target.closest('#stroke-controls-overlay')) {
+                    // Clicking outside the stroke controls, save and switch to pen
+                    this.strokeControls.hideControls();
+                    if (this.historyManager) {
+                        this.historyManager.saveState();
+                    }
+                    this.setTool('pen', false);
+                    // Continue with pen drawing by calling startDrawing
+                    this.drawingEngine.startDrawing(e);
                     return;
                 }
             }
@@ -510,7 +547,8 @@ class DrawingBoard {
             }
         });
         
-        // Insert image button
+        // 插入图片按钮 - 重新实现为类似背景图片的上传方式，但不改变背景
+        // Insert image button - reimplemented similar to background image upload, but doesn't change background
         document.getElementById('insert-image-btn').addEventListener('click', () => {
             document.getElementById('insert-image-upload').click();
         });
@@ -521,21 +559,26 @@ class DrawingBoard {
                 const reader = new FileReader();
                 reader.onload = (event) => {
                     const imageData = event.target.result;
-                    // Insert image at center of canvas
+                    // 在画布中心插入图片，不改变背景
+                    // Insert image at center of canvas, without changing background
                     const rect = this.canvas.getBoundingClientRect();
                     const centerX = rect.width / 2 - 100;
                     const centerY = rect.height / 2 - 100;
                     
-                    // Use callback to get the imageId once image is loaded
+                    // 使用canvasImageManager添加图片到画布
+                    // Use canvasImageManager to add image to canvas
                     this.canvasImageManager.addImage(imageData, centerX, centerY, (imageId) => {
-                        // Show the new image controls for the newly added image
-                        this.canvasImageControls.showControls(imageId);
+                        // 自动选择新添加的图片，显示控制手柄
+                        // Auto-select the newly added image and show controls
+                        this.canvasImageManager.selectImage(imageId);
+                        this.historyManager.saveState();
                     });
                     
                     this.updateUI();
                 };
                 reader.readAsDataURL(file);
             }
+            // 重置文件输入
             // Reset file input
             e.target.value = '';
         });
@@ -914,7 +957,11 @@ class DrawingBoard {
         
         this.updateUI();
         
-        if (showConfig && (tool === 'pen' || tool === 'eraser' || tool === 'background' || tool === 'insert' || tool === 'select')) {
+        // 使用"移动"功能时隐藏config-area
+        // Hide config-area when using "Move" tool
+        if (tool === 'pan') {
+            document.getElementById('config-area').classList.remove('show');
+        } else if (showConfig && (tool === 'pen' || tool === 'eraser' || tool === 'background' || tool === 'insert' || tool === 'select')) {
             document.getElementById('config-area').classList.add('show');
         }
     }
