@@ -766,6 +766,7 @@ class DrawingBoard {
     
     repositionToolbarsOnResize() {
         // Ensure all toolbars and panels stay within viewport after window resize
+        const EDGE_SPACING = 10; // Minimum spacing from viewport edges
         const panels = [
             document.getElementById('history-controls'),
             document.getElementById('config-area'),
@@ -796,35 +797,37 @@ class DrawingBoard {
             
             // Adjust position if overflowing
             if (right !== null) {
-                // Panel is right-aligned - check if it would be off-screen
-                if (right < 0 || windowWidth - right - rect.width < 0) {
-                    panel.style.right = '10px';
+                // Panel is right-aligned - check if actual left position would be negative
+                const actualLeft = windowWidth - right - rect.width;
+                if (actualLeft < 0) {
+                    panel.style.right = `${EDGE_SPACING}px`;
                 }
             } else if (left + rect.width > windowWidth) {
                 // Panel overflows right edge
-                const newLeft = Math.max(0, windowWidth - rect.width - 10);
+                const newLeft = Math.max(0, windowWidth - rect.width - EDGE_SPACING);
                 panel.style.left = `${newLeft}px`;
                 panel.style.right = 'auto';
             }
             
             if (bottom !== null) {
-                // Panel is bottom-aligned - check if it would be off-screen
-                if (bottom < 0 || windowHeight - bottom - rect.height < 0) {
-                    panel.style.bottom = '10px';
+                // Panel is bottom-aligned - check if actual top position would be negative
+                const actualTop = windowHeight - bottom - rect.height;
+                if (actualTop < 0) {
+                    panel.style.bottom = `${EDGE_SPACING}px`;
                 }
             } else if (top + rect.height > windowHeight) {
                 // Panel overflows bottom edge
-                const newTop = Math.max(0, windowHeight - rect.height - 10);
+                const newTop = Math.max(0, windowHeight - rect.height - EDGE_SPACING);
                 panel.style.top = `${newTop}px`;
                 panel.style.bottom = 'auto';
             }
             
             // Also ensure panel doesn't overflow left or top edges
             if (left < 0) {
-                panel.style.left = '10px';
+                panel.style.left = `${EDGE_SPACING}px`;
             }
             if (top < 0) {
-                panel.style.top = '10px';
+                panel.style.top = `${EDGE_SPACING}px`;
             }
         });
     }
