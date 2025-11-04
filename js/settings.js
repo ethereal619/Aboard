@@ -89,6 +89,53 @@ class SettingsManager {
         });
         
         localStorage.setItem('toolbarSize', this.toolbarSize);
+        
+        // Apply responsive text visibility after size update
+        this.updateToolbarTextVisibility();
+    }
+    
+    updateToolbarTextVisibility() {
+        const toolbar = document.getElementById('toolbar');
+        const buttons = toolbar.querySelectorAll('.tool-btn');
+        const windowWidth = window.innerWidth;
+        
+        // Calculate total toolbar width needed with text
+        let totalWidthWithText = 0;
+        const toolbarStyle = window.getComputedStyle(toolbar);
+        const toolbarPadding = parseFloat(toolbarStyle.paddingLeft) + parseFloat(toolbarStyle.paddingRight);
+        const gap = parseFloat(toolbarStyle.gap) || 12;
+        
+        buttons.forEach((btn, index) => {
+            const span = btn.querySelector('span');
+            if (span) {
+                span.style.display = ''; // Show temporarily to measure
+            }
+            const btnWidth = btn.offsetWidth;
+            totalWidthWithText += btnWidth;
+            if (index < buttons.length - 1) {
+                totalWidthWithText += gap;
+            }
+        });
+        totalWidthWithText += toolbarPadding;
+        
+        // Check if toolbar fits with text
+        const margin = 40; // Margin from screen edge
+        const fitsWithText = totalWidthWithText + margin * 2 <= windowWidth;
+        
+        // Show or hide text based on available space
+        buttons.forEach(btn => {
+            const span = btn.querySelector('span');
+            if (span) {
+                if (fitsWithText) {
+                    span.style.display = '';
+                    btn.style.minWidth = `${this.toolbarSize}px`;
+                } else {
+                    span.style.display = 'none';
+                    btn.style.minWidth = `${this.toolbarSize * 0.8}px`; // Smaller width when text is hidden
+                    btn.style.padding = `${this.toolbarSize / 5}px`;
+                }
+            }
+        });
     }
     
     updateConfigScale() {
