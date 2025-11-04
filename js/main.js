@@ -22,7 +22,8 @@ class DrawingBoard {
         this.imageControls = new ImageControls(this.backgroundManager);
         this.canvasImageManager = new CanvasImageManager(this.canvas, this.ctx);
         this.canvasImageControls = new CanvasImageControls(this.canvasImageManager, this.canvas, this.historyManager);
-        this.selectionManager = new SelectionManager(this.canvas, this.ctx, this.canvasImageManager, this.drawingEngine);
+        this.strokeControls = new StrokeControls(this.drawingEngine, this.canvas, this.ctx, this.historyManager);
+        this.selectionManager = new SelectionManager(this.canvas, this.ctx, this.canvasImageManager, this.drawingEngine, this.strokeControls);
         this.settingsManager = new SettingsManager();
         this.exportManager = new ExportManager(this.canvas, this.bgCanvas);
         
@@ -150,8 +151,8 @@ class DrawingBoard {
                 }
             }
             
-            // Check if clicking on coordinate origin point (only when in background mode)
-            if (this.drawingEngine.currentTool === 'background' && 
+            // Check if clicking on coordinate origin point (in background or select mode)
+            if ((this.drawingEngine.currentTool === 'background' || this.drawingEngine.currentTool === 'select') && 
                 this.backgroundManager.backgroundPattern === 'coordinate') {
                 const rect = this.bgCanvas.getBoundingClientRect();
                 const x = e.clientX - rect.left;

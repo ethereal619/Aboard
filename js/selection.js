@@ -2,11 +2,12 @@
 // Handles selection of drawn strokes and images
 
 class SelectionManager {
-    constructor(canvas, ctx, canvasImageManager, drawingEngine) {
+    constructor(canvas, ctx, canvasImageManager, drawingEngine, strokeControls) {
         this.canvas = canvas;
         this.ctx = ctx;
         this.canvasImageManager = canvasImageManager;
         this.drawingEngine = drawingEngine;
+        this.strokeControls = strokeControls;
         
         this.isSelecting = false;
         this.selectionStart = null;
@@ -46,6 +47,10 @@ class SelectionManager {
             this.canvasImageManager.selectImage(imageId);
             this.selectedImage = imageId;
             this.drawingEngine.deselectStroke();
+            // Hide stroke controls if showing
+            if (this.strokeControls) {
+                this.strokeControls.hideControls();
+            }
             return true;
         }
         
@@ -55,6 +60,10 @@ class SelectionManager {
             this.drawingEngine.selectStroke(strokeIndex);
             this.canvasImageManager.deselectImage();
             this.selectedImage = null;
+            // Show stroke controls for resizing and moving
+            if (this.strokeControls) {
+                this.strokeControls.showControls(strokeIndex);
+            }
             // Redraw to show selection
             this.redrawWithSelection();
             return true;
@@ -64,6 +73,10 @@ class SelectionManager {
         this.canvasImageManager.deselectImage();
         this.drawingEngine.deselectStroke();
         this.selectedImage = null;
+        // Hide stroke controls
+        if (this.strokeControls) {
+            this.strokeControls.hideControls();
+        }
         
         return false;
     }
