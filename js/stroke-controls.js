@@ -10,7 +10,7 @@ class StrokeControls {
         this.isActive = false;
         this.isDragging = false;
         this.isResizing = false;
-        this.isRotating = false; // 旋转状态 Rotation state
+        this.isRotating = false; // 旋转状态
         this.currentStrokeIndex = null;
         
         // Minimum stroke size
@@ -25,7 +25,7 @@ class StrokeControls {
         this.resizeStartBounds = null;
         this.resizeStartPos = { x: 0, y: 0 };
         
-        // Rotation state - 旋转状态
+        // 旋转状态
         this.rotateStartAngle = 0;
         this.rotateStartRotation = 0;
         this.strokeRotation = 0; // Current rotation angle in degrees
@@ -333,7 +333,7 @@ class StrokeControls {
         }
     }
     
-    // 旋转相关方法 Rotation methods
+    // 旋转相关方法
     startRotate(e) {
         if (this.currentStrokeIndex === null) return;
         
@@ -368,11 +368,8 @@ class StrokeControls {
         const currentAngle = Math.atan2(e.clientY - centerY, e.clientX - centerX) * 180 / Math.PI;
         const angleDelta = currentAngle - this.rotateStartAngle;
         
-        stroke.rotation = this.rotateStartRotation + angleDelta;
-        
-        // Normalize to 0-360
-        while (stroke.rotation < 0) stroke.rotation += 360;
-        while (stroke.rotation >= 360) stroke.rotation -= 360;
+        // Normalize to 0-360 using modulo for better performance
+        stroke.rotation = ((this.rotateStartRotation + angleDelta) % 360 + 360) % 360;
         
         // Calculate stroke center
         const bounds = this.drawingEngine.getStrokeBounds(stroke);
