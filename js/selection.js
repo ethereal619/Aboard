@@ -2,10 +2,9 @@
 // Handles selection of drawn strokes
 
 class SelectionManager {
-    constructor(canvas, ctx, canvasImageManager, drawingEngine, strokeControls) {
+    constructor(canvas, ctx, drawingEngine, strokeControls) {
         this.canvas = canvas;
         this.ctx = ctx;
-        // canvasImageManager is now null, keep parameter for compatibility
         this.drawingEngine = drawingEngine;
         this.strokeControls = strokeControls;
         

@@ -21,7 +21,7 @@ class DrawingBoard {
         this.backgroundManager = new BackgroundManager(this.bgCanvas, this.bgCtx);
         this.imageControls = new ImageControls(this.backgroundManager);
         this.strokeControls = new StrokeControls(this.drawingEngine, this.canvas, this.ctx, this.historyManager);
-        this.selectionManager = new SelectionManager(this.canvas, this.ctx, null, this.drawingEngine, this.strokeControls);
+        this.selectionManager = new SelectionManager(this.canvas, this.ctx, this.drawingEngine, this.strokeControls);
         this.settingsManager = new SettingsManager();
         this.exportManager = new ExportManager(this.canvas, this.bgCanvas);
         
@@ -791,8 +791,8 @@ class DrawingBoard {
             
             // Adjust position if overflowing
             if (right !== null) {
-                // Panel is right-aligned
-                if (windowWidth - right < rect.width) {
+                // Panel is right-aligned - check if it would be off-screen
+                if (right < 0 || windowWidth - right - rect.width < 0) {
                     panel.style.right = '10px';
                 }
             } else if (left + rect.width > windowWidth) {
@@ -803,8 +803,8 @@ class DrawingBoard {
             }
             
             if (bottom !== null) {
-                // Panel is bottom-aligned
-                if (windowHeight - bottom < rect.height) {
+                // Panel is bottom-aligned - check if it would be off-screen
+                if (bottom < 0 || windowHeight - bottom - rect.height < 0) {
                     panel.style.bottom = '10px';
                 }
             } else if (top + rect.height > windowHeight) {
