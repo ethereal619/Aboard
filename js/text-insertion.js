@@ -198,16 +198,23 @@ class TextInsertionManager {
         // Calculate text dimensions
         this.ctx.save();
         this.ctx.font = `${fontSize}px ${this.defaultFontFamily}`;
-        const metrics = this.ctx.measureText(text);
-        textObj.width = metrics.width;
-        textObj.height = fontSize * 1.2; // Approximate height
+        const lines = text.split('\n');
+        let maxWidth = 0;
+        lines.forEach(line => {
+            const metrics = this.ctx.measureText(line);
+            maxWidth = Math.max(maxWidth, metrics.width);
+        });
+        textObj.width = maxWidth;
+        textObj.height = fontSize * 1.2 * lines.length; // Approximate height
         this.ctx.restore();
         
         this.textObjects.push(textObj);
-        this.drawAllTextObjects();
         
         // Auto-select the newly inserted text
         this.selectedTextIndex = this.textObjects.length - 1;
+        
+        // Render text immediately
+        this.drawAllTextObjects();
         this.drawTextSelection();
         
         if (this.historyManager) {

@@ -132,6 +132,11 @@ class DrawingBoard {
         }
         
         this.backgroundManager.drawBackground();
+        
+        // Redraw text objects after resize
+        if (this.textInsertionManager) {
+            this.textInsertionManager.redrawCanvas();
+        }
     }
     
     setupEventListeners() {
@@ -328,6 +333,10 @@ class DrawingBoard {
                 // Clear stroke selection as strokes are no longer valid
                 this.drawingEngine.clearStrokes();
                 this.updateUI();
+                // Redraw text objects after undo
+                if (this.textInsertionManager) {
+                    this.textInsertionManager.redrawCanvas();
+                }
             }
         });
         
@@ -336,6 +345,10 @@ class DrawingBoard {
                 // Clear stroke selection as strokes are no longer valid
                 this.drawingEngine.clearStrokes();
                 this.updateUI();
+                // Redraw text objects after redo
+                if (this.textInsertionManager) {
+                    this.textInsertionManager.redrawCanvas();
+                }
             }
         });
         
@@ -1007,6 +1020,10 @@ class DrawingBoard {
             this.historyManager.saveState();
             this.closeConfigPanel();
         }
+        // Redraw text objects on top
+        if (this.textInsertionManager) {
+            this.textInsertionManager.redrawCanvas();
+        }
     }
     
     closeConfigPanel() {
@@ -1204,8 +1221,12 @@ class DrawingBoard {
             this.canvas.style.transform = transform;
             this.bgCanvas.style.transform = transform;
         } else {
-            // In infinite mode, simple scale with pan
-            const transform = `translate(${panX}px, ${panY}px) scale(${scale})`;
+            // In infinite mode, center the canvas and apply scale with pan
+            this.canvas.style.left = '50%';
+            this.canvas.style.top = '50%';
+            this.bgCanvas.style.left = '50%';
+            this.bgCanvas.style.top = '50%';
+            const transform = `translate(-50%, -50%) translate(${panX}px, ${panY}px) scale(${scale})`;
             this.canvas.style.transform = transform;
             this.bgCanvas.style.transform = transform;
         }
