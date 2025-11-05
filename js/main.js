@@ -22,7 +22,7 @@ class DrawingBoard {
         this.imageControls = new ImageControls(this.backgroundManager);
         this.strokeControls = new StrokeControls(this.drawingEngine, this.canvas, this.ctx, this.historyManager);
         this.selectionManager = new SelectionManager(this.canvas, this.ctx, this.drawingEngine, this.strokeControls);
-        this.shapeInsertionManager = new ShapeInsertionManager(this.canvas, this.ctx, this.historyManager);
+        this.shapeInsertionManager = new ShapeInsertionManager(this.canvas, this.ctx, this.historyManager, this.drawingEngine);
         this.settingsManager = new SettingsManager();
         this.announcementManager = new AnnouncementManager();
         this.exportManager = new ExportManager(this.canvas, this.bgCanvas);
@@ -149,9 +149,6 @@ class DrawingBoard {
         
         this.backgroundManager.drawBackground();
         
-        // Re-center the canvas after resize
-        this.centerCanvas();
-        
         // Redraw shapes after resize
         if (this.shapeInsertionManager) {
             this.shapeInsertionManager.redrawCanvas();
@@ -233,8 +230,12 @@ class DrawingBoard {
                 const rect = this.canvas.getBoundingClientRect();
                 const scaleX = this.canvas.offsetWidth / rect.width;
                 const scaleY = this.canvas.offsetHeight / rect.height;
-                const x = (e.clientX - rect.left) * scaleX;
-                const y = (e.clientY - rect.top) * scaleY;
+                let x = (e.clientX - rect.left) * scaleX;
+                let y = (e.clientY - rect.top) * scaleY;
+                
+                // Transform to canvas coordinate space
+                x = (x - this.drawingEngine.panOffset.x) / this.drawingEngine.canvasScale;
+                y = (y - this.drawingEngine.panOffset.y) / this.drawingEngine.canvasScale;
                 
                 // Check if clicking on shape object first
                 const shapeIndex = this.shapeInsertionManager.hitTestShape(x, y);
@@ -605,10 +606,10 @@ class DrawingBoard {
         });
         
         // Shape type buttons
-        document.querySelectorAll('.shape-type-btn').forEach(btn => {
+        document.querySelectorAll('.pen-type-btn[data-shape-type]').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 this.shapeInsertionManager.setShapeType(e.target.dataset.shapeType);
-                document.querySelectorAll('.shape-type-btn').forEach(b => b.classList.remove('active'));
+                document.querySelectorAll('.pen-type-btn[data-shape-type]').forEach(b => b.classList.remove('active'));
                 e.target.classList.add('active');
             });
         });

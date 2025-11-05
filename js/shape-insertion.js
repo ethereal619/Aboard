@@ -2,10 +2,11 @@
 // Handles shape insertion, editing, and manipulation
 
 class ShapeInsertionManager {
-    constructor(canvas, ctx, historyManager) {
+    constructor(canvas, ctx, historyManager, drawingEngine) {
         this.canvas = canvas;
         this.ctx = ctx;
         this.historyManager = historyManager;
+        this.drawingEngine = drawingEngine;
         
         // Shape objects storage
         this.shapeObjects = [];
@@ -35,14 +36,27 @@ class ShapeInsertionManager {
         this.MAX_SIZE = 500;
     }
     
-    // Insert shape at mouse position
-    insertShape(e) {
+    // Helper method to transform mouse coordinates to canvas space
+    transformMouseCoords(e) {
         const rect = this.canvas.getBoundingClientRect();
         const scaleX = this.canvas.offsetWidth / rect.width;
         const scaleY = this.canvas.offsetHeight / rect.height;
         
-        const x = (e.clientX - rect.left) * scaleX;
-        const y = (e.clientY - rect.top) * scaleY;
+        let x = (e.clientX - rect.left) * scaleX;
+        let y = (e.clientY - rect.top) * scaleY;
+        
+        // Transform coordinates to account for pan offset and scale
+        if (this.drawingEngine) {
+            x = (x - this.drawingEngine.panOffset.x) / this.drawingEngine.canvasScale;
+            y = (y - this.drawingEngine.panOffset.y) / this.drawingEngine.canvasScale;
+        }
+        
+        return { x, y };
+    }
+    
+    // Insert shape at mouse position
+    insertShape(e) {
+        const { x, y } = this.transformMouseCoords(e);
         
         const shapeObj = {
             type: this.defaultShapeType,
@@ -279,12 +293,7 @@ class ShapeInsertionManager {
     startDrag(e) {
         if (this.selectedShapeIndex === null || this.selectedShapeIndex < 0) return;
         
-        const rect = this.canvas.getBoundingClientRect();
-        const scaleX = this.canvas.offsetWidth / rect.width;
-        const scaleY = this.canvas.offsetHeight / rect.height;
-        
-        const x = (e.clientX - rect.left) * scaleX;
-        const y = (e.clientY - rect.top) * scaleY;
+        const { x, y } = this.transformMouseCoords(e);
         
         // Check if clicking on a handle
         const handle = this.hitTestHandle(x, y);
@@ -310,12 +319,7 @@ class ShapeInsertionManager {
         } else if (this.isRotating) {
             this.rotateShape(e);
         } else if (this.isDragging) {
-            const rect = this.canvas.getBoundingClientRect();
-            const scaleX = this.canvas.offsetWidth / rect.width;
-            const scaleY = this.canvas.offsetHeight / rect.height;
-            
-            const currentX = (e.clientX - rect.left) * scaleX;
-            const currentY = (e.clientY - rect.top) * scaleY;
+            const { x: currentX, y: currentY } = this.transformMouseCoords(e);
             
             const dx = currentX - this.dragStart.x;
             const dy = currentY - this.dragStart.y;
@@ -389,16 +393,10 @@ class ShapeInsertionManager {
     
     // Start resize
     startResize(e, handle) {
-        const rect = this.canvas.getBoundingClientRect();
-        const scaleX = this.canvas.offsetWidth / rect.width;
-        const scaleY = this.canvas.offsetHeight / rect.height;
-        
         this.isResizing = true;
         this.resizeHandle = handle;
-        this.dragStart = {
-            x: (e.clientX - rect.left) * scaleX,
-            y: (e.clientY - rect.top) * scaleY
-        };
+        const { x, y } = this.transformMouseCoords(e);
+        this.dragStart = { x, y };
         
         const shapeObj = this.shapeObjects[this.selectedShapeIndex];
         this.resizeStartSize = { width: shapeObj.width, height: shapeObj.height };
@@ -408,12 +406,7 @@ class ShapeInsertionManager {
     resizeShape(e) {
         if (!this.isResizing || this.selectedShapeIndex === null) return;
         
-        const rect = this.canvas.getBoundingClientRect();
-        const scaleX = this.canvas.offsetWidth / rect.width;
-        const scaleY = this.canvas.offsetHeight / rect.height;
-        
-        const currentX = (e.clientX - rect.left) * scaleX;
-        const currentY = (e.clientY - rect.top) * scaleY;
+        const { x: currentX, y: currentY } = this.transformMouseCoords(e);
         
         const dx = currentX - this.dragStart.x;
         const dy = currentY - this.dragStart.y;
@@ -447,15 +440,10 @@ class ShapeInsertionManager {
     
     // Start rotation
     startRotate(e) {
-        const rect = this.canvas.getBoundingClientRect();
-        const scaleX = this.canvas.offsetWidth / rect.width;
-        const scaleY = this.canvas.offsetHeight / rect.height;
-        
         this.isRotating = true;
         const shapeObj = this.shapeObjects[this.selectedShapeIndex];
         
-        const mouseX = (e.clientX - rect.left) * scaleX;
-        const mouseY = (e.clientY - rect.top) * scaleY;
+        const { x: mouseX, y: mouseY } = this.transformMouseCoords(e);
         
         this.rotateStartAngle = Math.atan2(mouseY - shapeObj.y, mouseX - shapeObj.x) * 180 / Math.PI;
         this.rotateStartRotation = shapeObj.rotation;
@@ -465,14 +453,9 @@ class ShapeInsertionManager {
     rotateShape(e) {
         if (!this.isRotating || this.selectedShapeIndex === null) return;
         
-        const rect = this.canvas.getBoundingClientRect();
-        const scaleX = this.canvas.offsetWidth / rect.width;
-        const scaleY = this.canvas.offsetHeight / rect.height;
-        
         const shapeObj = this.shapeObjects[this.selectedShapeIndex];
         
-        const mouseX = (e.clientX - rect.left) * scaleX;
-        const mouseY = (e.clientY - rect.top) * scaleY;
+        const { x: mouseX, y: mouseY } = this.transformMouseCoords(e);
         
         const currentAngle = Math.atan2(mouseY - shapeObj.y, mouseX - shapeObj.x) * 180 / Math.PI;
         const angleDelta = currentAngle - this.rotateStartAngle;
