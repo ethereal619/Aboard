@@ -7,13 +7,15 @@ class SettingsManager {
         this.configScale = parseFloat(localStorage.getItem('configScale')) || 1.0;
         this.controlPosition = localStorage.getItem('controlPosition') || 'top-right';
         this.edgeSnapEnabled = localStorage.getItem('edgeSnapEnabled') !== 'false';
-        this.infiniteCanvas = localStorage.getItem('canvasMode') !== 'paginated';
+        this.infiniteCanvas = localStorage.getItem('canvasMode') === 'infinite';
         this.showZoomControls = localStorage.getItem('showZoomControls') !== 'false';
         this.showFullscreenBtn = localStorage.getItem('showFullscreenBtn') !== 'false';
         this.patternPreferences = this.loadPatternPreferences();
         this.canvasWidth = parseInt(localStorage.getItem('canvasWidth')) || 1920;
         this.canvasHeight = parseInt(localStorage.getItem('canvasHeight')) || 1080;
         this.canvasPreset = localStorage.getItem('canvasPreset') || 'custom';
+        this.themeColor = localStorage.getItem('themeColor') || '#007AFF';
+        this.globalFont = localStorage.getItem('globalFont') || 'system';
     }
     
     loadPatternPreferences() {
@@ -88,6 +90,68 @@ class SettingsManager {
         });
         
         localStorage.setItem('toolbarSize', this.toolbarSize);
+        
+        // Apply responsive text visibility after size update
+        this.updateToolbarTextVisibility();
+    }
+    
+    updateToolbarTextVisibility() {
+        const toolbar = document.getElementById('toolbar');
+        const buttons = toolbar.querySelectorAll('.tool-btn');
+        const windowWidth = window.innerWidth;
+        
+        // Constants for responsive sizing
+        const ICON_ONLY_SIZE_RATIO = 0.8; // Size multiplier when text is hidden
+        const SCREEN_MARGIN = 40; // Margin from screen edge
+        const DEFAULT_GAP = 12; // Default gap between buttons if not specified in CSS
+        
+        // Calculate total toolbar width needed with text
+        let totalWidthWithText = 0;
+        const toolbarStyle = window.getComputedStyle(toolbar);
+        const toolbarPadding = parseFloat(toolbarStyle.paddingLeft) + parseFloat(toolbarStyle.paddingRight);
+        const gap = parseFloat(toolbarStyle.gap) || DEFAULT_GAP;
+        
+        // Store original display values before measuring
+        const originalDisplayValues = new Map();
+        buttons.forEach(btn => {
+            const span = btn.querySelector('span');
+            if (span) {
+                originalDisplayValues.set(span, window.getComputedStyle(span).display);
+                // Temporarily show to measure
+                if (originalDisplayValues.get(span) === 'none') {
+                    span.style.display = 'inline';
+                }
+            }
+        });
+        
+        buttons.forEach((btn, index) => {
+            const btnWidth = btn.offsetWidth;
+            totalWidthWithText += btnWidth;
+            if (index < buttons.length - 1) {
+                totalWidthWithText += gap;
+            }
+        });
+        totalWidthWithText += toolbarPadding;
+        
+        // Check if toolbar fits with text
+        const fitsWithText = totalWidthWithText + SCREEN_MARGIN * 2 <= windowWidth;
+        
+        // Show or hide text based on available space
+        buttons.forEach(btn => {
+            const span = btn.querySelector('span');
+            if (span) {
+                if (fitsWithText) {
+                    // Restore original display or use default
+                    const originalDisplay = originalDisplayValues.get(span);
+                    span.style.display = (originalDisplay !== 'none') ? originalDisplay : 'inline';
+                    btn.style.minWidth = `${this.toolbarSize}px`;
+                } else {
+                    span.style.display = 'none';
+                    // When text is hidden, reduce min-width to icon-only size
+                    btn.style.minWidth = `${this.toolbarSize * ICON_ONLY_SIZE_RATIO}px`;
+                }
+            }
+        });
     }
     
     updateConfigScale() {
@@ -152,6 +216,17 @@ class SettingsManager {
         document.querySelectorAll('.pattern-pref-checkbox').forEach(checkbox => {
             checkbox.checked = this.patternPreferences[checkbox.dataset.pattern] !== false;
         });
+        
+        // Load theme color
+        this.applyThemeColor();
+        document.getElementById('custom-theme-color-picker').value = this.themeColor;
+        document.querySelectorAll('.color-btn[data-theme-color]').forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.themeColor === this.themeColor);
+        });
+        
+        // Load global font
+        this.applyGlobalFont();
+        document.getElementById('global-font-select').value = this.globalFont;
     }
     
     updateCanvasSizeSettings() {
@@ -196,5 +271,60 @@ class SettingsManager {
         this.canvasHeight = height;
         localStorage.setItem('canvasWidth', width);
         localStorage.setItem('canvasHeight', height);
+    }
+    
+    setThemeColor(color) {
+        this.themeColor = color;
+        localStorage.setItem('themeColor', color);
+        document.documentElement.style.setProperty('--theme-color', color);
+    }
+    
+    applyThemeColor() {
+        document.documentElement.style.setProperty('--theme-color', this.themeColor);
+    }
+    
+    setGlobalFont(font) {
+        this.globalFont = font;
+        localStorage.setItem('globalFont', font);
+        this.applyGlobalFont();
+    }
+    
+    applyGlobalFont() {
+        let fontFamily;
+        switch(this.globalFont) {
+            case 'system':
+                fontFamily = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif';
+                break;
+            case 'serif':
+                fontFamily = 'SimSun, "Times New Roman", Times, Georgia, serif';
+                break;
+            case 'sans-serif':
+                fontFamily = 'SimHei, Arial, "Helvetica Neue", Helvetica, sans-serif';
+                break;
+            case 'monospace':
+                fontFamily = '"Courier New", Courier, "Consolas", monospace';
+                break;
+            case 'cursive':
+                fontFamily = '"Comic Sans MS", "Apple Chancery", cursive';
+                break;
+            case 'Microsoft YaHei':
+                fontFamily = '"Microsoft YaHei", "微软雅黑", Arial, sans-serif';
+                break;
+            case 'SimSun':
+                fontFamily = 'SimSun, "宋体", Georgia, serif';
+                break;
+            case 'SimHei':
+                fontFamily = 'SimHei, "黑体", Arial, sans-serif';
+                break;
+            case 'KaiTi':
+                fontFamily = 'KaiTi, "楷体", Georgia, serif';
+                break;
+            case 'FangSong':
+                fontFamily = 'FangSong, "仿宋", Georgia, serif';
+                break;
+            default:
+                fontFamily = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif';
+        }
+        document.body.style.fontFamily = fontFamily;
     }
 }

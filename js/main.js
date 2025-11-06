@@ -20,7 +20,11 @@ class DrawingBoard {
         this.historyManager = new HistoryManager(this.canvas, this.ctx);
         this.backgroundManager = new BackgroundManager(this.bgCanvas, this.bgCtx);
         this.imageControls = new ImageControls(this.backgroundManager);
+        this.strokeControls = new StrokeControls(this.drawingEngine, this.canvas, this.ctx, this.historyManager);
+        this.timeDisplayManager = new TimeDisplayManager();
         this.settingsManager = new SettingsManager();
+        this.announcementManager = new AnnouncementManager();
+        this.exportManager = new ExportManager(this.canvas, this.bgCanvas);
         
         // Pagination
         this.currentPage = 1;
@@ -50,6 +54,10 @@ class DrawingBoard {
         this.draggedElementWidth = 0;
         this.draggedElementHeight = 0;
         
+        // Coordinate origin dragging state
+        this.isDraggingCoordinateOrigin = false;
+        this.coordinateOriginDragStart = { x: 0, y: 0 };
+        
         // Uploaded images storage
         this.uploadedImages = this.loadUploadedImages();
         
@@ -60,8 +68,9 @@ class DrawingBoard {
         this.backgroundManager.drawBackground();
         this.updateUI();
         this.historyManager.saveState();
+        this.initializeCanvasView(); // Initialize canvas view (70% scale, centered)
         this.updateZoomUI();
-        this.applyZoom();
+        this.applyZoom(false); // Don't update config-area scale on refresh
         this.updateZoomControlsVisibility();
         this.updateFullscreenBtnVisibility();
         this.updatePatternGrid();
@@ -71,8 +80,47 @@ class DrawingBoard {
         document.addEventListener('fullscreenchange', () => this.handleFullscreenChange());
     }
     
+    
+    initializeCanvasView() {
+        // On startup or refresh, set canvas to 70% of fullscreen size and center it
+        // Only apply if no saved scale exists
+        const savedScale = localStorage.getItem('canvasScale');
+        if (!savedScale) {
+            this.drawingEngine.canvasScale = 0.7;
+            localStorage.setItem('canvasScale', 0.7);
+        }
+        
+        // Center the canvas on startup
+        this.centerCanvas();
+    }
+    
+    centerCanvas() {
+        // Get the viewport dimensions
+        const viewportWidth = window.innerWidth;
+        const viewportHeight = window.innerHeight;
+        
+        // Get the canvas center (at 0,0 without pan offset, canvas is conceptually infinite)
+        // We want to move the canvas so that the origin (0,0) is centered in the viewport
+        // Pan offset moves the canvas, so positive offset moves content right/down
+        const centerX = viewportWidth / 2;
+        const centerY = viewportHeight / 2;
+        
+        // Set pan offset to center the origin
+        this.drawingEngine.panOffset.x = centerX / this.drawingEngine.canvasScale;
+        this.drawingEngine.panOffset.y = centerY / this.drawingEngine.canvasScale;
+        
+        // Save to localStorage
+        localStorage.setItem('panOffsetX', this.drawingEngine.panOffset.x);
+        localStorage.setItem('panOffsetY', this.drawingEngine.panOffset.y);
+        
+        // Apply the transform
+        this.applyPanTransform();
+    }
+    
     resizeCanvas() {
-        const rect = this.canvas.getBoundingClientRect();
+        // 获取窗口尺寸而不是当前canvas的尺寸，避免缩放导致canvas消失
+        const windowWidth = window.innerWidth;
+        const windowHeight = window.innerHeight;
         const dpr = window.devicePixelRatio || 1;
         
         const oldWidth = this.canvas.width;
@@ -80,15 +128,16 @@ class DrawingBoard {
         const imageData = this.historyManager.historyStep >= 0 ? 
             this.ctx.getImageData(0, 0, oldWidth, oldHeight) : null;
         
-        this.canvas.width = rect.width * dpr;
-        this.canvas.height = rect.height * dpr;
-        this.canvas.style.width = rect.width + 'px';
-        this.canvas.style.height = rect.height + 'px';
+        // 使用窗口尺寸设置canvas大小，确保canvas始终占据整个窗口
+        this.canvas.width = windowWidth * dpr;
+        this.canvas.height = windowHeight * dpr;
+        this.canvas.style.width = windowWidth + 'px';
+        this.canvas.style.height = windowHeight + 'px';
         
-        this.bgCanvas.width = rect.width * dpr;
-        this.bgCanvas.height = rect.height * dpr;
-        this.bgCanvas.style.width = rect.width + 'px';
-        this.bgCanvas.style.height = rect.height + 'px';
+        this.bgCanvas.width = windowWidth * dpr;
+        this.bgCanvas.height = windowHeight * dpr;
+        this.bgCanvas.style.width = windowWidth + 'px';
+        this.bgCanvas.style.height = windowHeight + 'px';
         
         this.ctx.scale(dpr, dpr);
         this.bgCtx.scale(dpr, dpr);
@@ -98,22 +147,72 @@ class DrawingBoard {
         }
         
         this.backgroundManager.drawBackground();
+        
+        // Re-center the canvas after resize
+        this.centerCanvas();
     }
     
     setupEventListeners() {
         // Canvas drawing events - use document-level listeners for continuous drawing
         document.addEventListener('mousedown', (e) => {
             // Skip if clicking on UI elements (except canvas)
-            if (e.target.closest('#toolbar') || 
-                e.target.closest('#config-area') || 
-                e.target.closest('#history-controls') || 
-                e.target.closest('#pagination-controls') ||
-                e.target.closest('.modal')) {
-                return;
+            if (e.target && e.target.closest) {
+            // 如果正在编辑笔迹，点击工具栏或属性栏时自动保存
+                if (this.strokeControls.isActive && 
+                    (e.target.closest('#toolbar') || e.target.closest('#config-area'))) {
+                    this.strokeControls.hideControls();
+                    if (this.historyManager) {
+                        this.historyManager.saveState();
+                    }
+                }
+                
+                if (e.target.closest('#toolbar') || 
+                    e.target.closest('#config-area') || 
+                    e.target.closest('#history-controls') || 
+                    e.target.closest('#pagination-controls') ||
+                    e.target.closest('.modal') ||
+                    e.target.closest('.canvas-image-selection')) {
+                    return;
+                }
+            }
+            
+            // 如果正在编辑笔迹，点击画布其他位置时自动保存并切换到笔模式
+            if (this.strokeControls.isActive) {
+                const rect = this.canvas.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                
+                // Check if clicking inside the stroke controls overlay
+                if (!e.target.closest('#stroke-controls-overlay')) {
+                    // Clicking outside the stroke controls, save and switch to pen
+                    this.strokeControls.hideControls();
+                    if (this.historyManager) {
+                        this.historyManager.saveState();
+                    }
+                    this.setTool('pen', false);
+                    // Continue with pen drawing by calling startDrawing
+                    this.drawingEngine.startDrawing(e);
+                    return;
+                }
+            }
+            
+            // Check if clicking on coordinate origin point (in background mode)
+            if (this.drawingEngine.currentTool === 'background' && 
+                this.backgroundManager.backgroundPattern === 'coordinate') {
+                const rect = this.bgCanvas.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                
+                if (this.backgroundManager.isPointNearCoordinateOrigin(x, y)) {
+                    this.isDraggingCoordinateOrigin = true;
+                    this.coordinateOriginDragStart = { x: e.clientX, y: e.clientY };
+                    return;
+                }
             }
             
             // Auto-switch to pen mode if currently in background mode
-            if (this.drawingEngine.currentTool === 'background') {
+            // But not if image controls are active (user is manipulating background image)
+            if (this.drawingEngine.currentTool === 'background' && !this.imageControls.isActive) {
                 this.setTool('pen', false); // Don't show config panel
             }
             
@@ -125,9 +224,11 @@ class DrawingBoard {
         });
         
         document.addEventListener('mousemove', (e) => {
-            if (this.drawingEngine.isPanning) {
+            if (this.isDraggingCoordinateOrigin) {
+                this.dragCoordinateOrigin(e);
+            } else if (this.drawingEngine.isPanning) {
                 this.drawingEngine.pan(e);
-                this.redrawCanvas();
+                this.applyPanTransform();
             } else if (this.drawingEngine.isDrawing) {
                 this.drawingEngine.draw(e);
                 this.updateEraserCursor(e);
@@ -137,6 +238,7 @@ class DrawingBoard {
         });
         
         document.addEventListener('mouseup', () => {
+            this.stopDraggingCoordinateOrigin();
             this.handleDrawingComplete();
             this.drawingEngine.stopPanning();
         });
@@ -201,18 +303,23 @@ class DrawingBoard {
         document.getElementById('background-btn').addEventListener('click', () => this.setTool('background'));
         document.getElementById('clear-btn').addEventListener('click', () => this.confirmClear());
         document.getElementById('settings-btn').addEventListener('click', () => this.openSettings());
+        document.getElementById('more-btn').addEventListener('click', () => this.setTool('more'));
         
         document.getElementById('config-close-btn').addEventListener('click', () => this.closeConfigPanel());
         
         // History buttons
         document.getElementById('undo-btn').addEventListener('click', () => {
             if (this.historyManager.undo()) {
+                // Clear stroke selection as strokes are no longer valid
+                this.drawingEngine.clearStrokes();
                 this.updateUI();
             }
         });
         
         document.getElementById('redo-btn').addEventListener('click', () => {
             if (this.historyManager.redo()) {
+                // Clear stroke selection as strokes are no longer valid
+                this.drawingEngine.clearStrokes();
                 this.updateUI();
             }
         });
@@ -230,6 +337,9 @@ class DrawingBoard {
         // Fullscreen button
         document.getElementById('fullscreen-btn').addEventListener('click', () => this.toggleFullscreen());
         
+        // Export button (moved to top controls, always visible)
+        document.getElementById('export-btn-top').addEventListener('click', () => this.exportManager.showModal());
+        
         // Pagination controls - merged next and add button
         document.getElementById('prev-page-btn').addEventListener('click', () => this.prevPage());
         document.getElementById('next-or-add-page-btn').addEventListener('click', () => this.nextOrAddPage());
@@ -246,7 +356,20 @@ class DrawingBoard {
         this.setupKeyboardShortcuts();
         this.setupDraggablePanels();
         
-        window.addEventListener('resize', () => this.resizeCanvas());
+        // Debounce resize handler for better performance
+        let resizeTimeout;
+        window.addEventListener('resize', () => {
+            clearTimeout(resizeTimeout);
+            resizeTimeout = setTimeout(() => {
+                this.resizeCanvas();
+                // Update toolbar text visibility on resize
+                this.settingsManager.updateToolbarTextVisibility();
+                // Reposition toolbars to ensure they stay within viewport
+                this.repositionToolbarsOnResize();
+                // Update config-area scale on window resize
+                this.updateConfigAreaScale();
+            }, 150); // 150ms debounce delay
+        });
         
         // Ctrl+scroll to zoom canvas
         this.setupCanvasZoom();
@@ -335,6 +458,10 @@ class DrawingBoard {
                 const reader = new FileReader();
                 reader.onload = (event) => {
                     const imageData = event.target.result;
+                    
+                    // Reset confirmation state for new image
+                    this.imageControls.resetConfirmation();
+                    
                     this.backgroundManager.setBackgroundImage(imageData);
                     document.querySelectorAll('.pattern-option-btn').forEach(b => b.classList.remove('active'));
                     document.querySelector('.pattern-option-btn[data-pattern="image"]').classList.add('active');
@@ -361,6 +488,18 @@ class DrawingBoard {
         bgImageSizeSlider.addEventListener('input', (e) => {
             this.backgroundManager.setImageSize(parseInt(e.target.value) / 100);
             bgImageSizeValue.textContent = e.target.value;
+        });
+        
+        // Adjust background image button
+        document.getElementById('adjust-bg-image-btn').addEventListener('click', () => {
+            // Reset confirmation state to allow re-adjustment
+            this.imageControls.resetConfirmation();
+            
+            // Show image controls for the current background image
+            const imgData = this.backgroundManager.getImageData();
+            if (imgData) {
+                this.imageControls.showControls(imgData);
+            }
         });
         
         // Pattern density slider
@@ -400,6 +539,43 @@ class DrawingBoard {
                 this.eraserCursor.style.height = e.target.value + 'px';
             }
         });
+        
+        // More config panel (time display checkboxes)
+        const showDateCheckboxMore = document.getElementById('show-date-checkbox-more');
+        const showTimeCheckboxMore = document.getElementById('show-time-checkbox-more');
+        
+        // Load initial checkbox states
+        if (showDateCheckboxMore && showTimeCheckboxMore) {
+            showDateCheckboxMore.checked = this.timeDisplayManager.showDate;
+            showTimeCheckboxMore.checked = this.timeDisplayManager.showTime;
+            
+            // Update visibility based on initial state
+            if (showDateCheckboxMore.checked || showTimeCheckboxMore.checked) {
+                this.timeDisplayManager.show();
+            } else {
+                this.timeDisplayManager.hide();
+            }
+            
+            showDateCheckboxMore.addEventListener('change', (e) => {
+                this.timeDisplayManager.setShowDate(e.target.checked);
+                // Hide if both unchecked
+                if (!showDateCheckboxMore.checked && !showTimeCheckboxMore.checked) {
+                    this.timeDisplayManager.hide();
+                } else {
+                    this.timeDisplayManager.show();
+                }
+            });
+            
+            showTimeCheckboxMore.addEventListener('change', (e) => {
+                this.timeDisplayManager.setShowTime(e.target.checked);
+                // Hide if both unchecked
+                if (!showDateCheckboxMore.checked && !showTimeCheckboxMore.checked) {
+                    this.timeDisplayManager.hide();
+                } else {
+                    this.timeDisplayManager.show();
+                }
+            });
+        }
     }
     
     setupSettingsListeners() {
@@ -452,6 +628,11 @@ class DrawingBoard {
         document.getElementById('edge-snap-checkbox').addEventListener('change', (e) => {
             this.settingsManager.edgeSnapEnabled = e.target.checked;
             localStorage.setItem('edgeSnapEnabled', e.target.checked);
+        });
+        
+        // Global font selector
+        document.getElementById('global-font-select').addEventListener('change', (e) => {
+            this.settingsManager.setGlobalFont(e.target.value);
         });
         
         // Canvas mode buttons
@@ -541,6 +722,21 @@ class DrawingBoard {
             this.updateFullscreenBtnVisibility();
         });
         
+        // Theme color buttons
+        document.querySelectorAll('.color-btn[data-theme-color]').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                this.settingsManager.setThemeColor(e.target.dataset.themeColor);
+                document.querySelectorAll('.color-btn[data-theme-color]').forEach(b => b.classList.remove('active'));
+                e.target.classList.add('active');
+            });
+        });
+        
+        const customThemeColorPicker = document.getElementById('custom-theme-color-picker');
+        customThemeColorPicker.addEventListener('input', (e) => {
+            this.settingsManager.setThemeColor(e.target.value);
+            document.querySelectorAll('.color-btn[data-theme-color]').forEach(b => b.classList.remove('active'));
+        });
+        
         // Pattern preferences
         document.querySelectorAll('.pattern-pref-checkbox').forEach(checkbox => {
             checkbox.addEventListener('change', (e) => {
@@ -552,6 +748,180 @@ class DrawingBoard {
         document.getElementById('settings-modal').addEventListener('click', (e) => {
             if (e.target.id === 'settings-modal') {
                 this.closeSettings();
+            }
+        });
+        
+        // Time display settings
+        document.getElementById('show-time-display-checkbox').addEventListener('change', (e) => {
+            const timeDisplaySettings = document.getElementById('time-display-settings');
+            const timezoneSettings = document.getElementById('timezone-settings');
+            const timeFormatSettings = document.getElementById('time-format-settings');
+            const dateFormatSettings = document.getElementById('date-format-settings');
+            const timeColorSettings = document.getElementById('time-color-settings');
+            const timeFontSizeSettings = document.getElementById('time-font-size-settings');
+            const timeOpacitySettings = document.getElementById('time-opacity-settings');
+            const timeFullscreenSettings = document.getElementById('time-fullscreen-settings');
+            const timeFullscreenFontSizeSettings = document.getElementById('time-fullscreen-font-size-settings');
+            
+            if (e.target.checked) {
+                this.timeDisplayManager.show();
+                timeDisplaySettings.style.display = 'flex';
+                timezoneSettings.style.display = 'flex';
+                timeFormatSettings.style.display = 'flex';
+                dateFormatSettings.style.display = 'flex';
+                timeColorSettings.style.display = 'flex';
+                timeFontSizeSettings.style.display = 'flex';
+                timeOpacitySettings.style.display = 'flex';
+                timeFullscreenSettings.style.display = 'flex';
+                timeFullscreenFontSizeSettings.style.display = 'flex';
+            } else {
+                this.timeDisplayManager.hide();
+                timeDisplaySettings.style.display = 'none';
+                timezoneSettings.style.display = 'none';
+                timeFormatSettings.style.display = 'none';
+                dateFormatSettings.style.display = 'none';
+                timeColorSettings.style.display = 'none';
+                timeFontSizeSettings.style.display = 'none';
+                timeOpacitySettings.style.display = 'none';
+                timeFullscreenSettings.style.display = 'none';
+                timeFullscreenFontSizeSettings.style.display = 'none';
+            }
+        });
+        
+        // Display type buttons (both, date-only, time-only)
+        document.querySelectorAll('.display-option-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const displayType = e.target.dataset.displayType;
+                document.querySelectorAll('.display-option-btn').forEach(b => b.classList.remove('active'));
+                e.target.classList.add('active');
+                
+                switch(displayType) {
+                    case 'both':
+                        this.timeDisplayManager.setShowDate(true);
+                        this.timeDisplayManager.setShowTime(true);
+                        break;
+                    case 'date-only':
+                        this.timeDisplayManager.setShowDate(true);
+                        this.timeDisplayManager.setShowTime(false);
+                        break;
+                    case 'time-only':
+                        this.timeDisplayManager.setShowDate(false);
+                        this.timeDisplayManager.setShowTime(true);
+                        break;
+                }
+            });
+        });
+        
+        // Timezone selector
+        document.getElementById('timezone-select').addEventListener('change', (e) => {
+            this.timeDisplayManager.setTimezone(e.target.value);
+        });
+        
+        document.getElementById('time-format-select').addEventListener('change', (e) => {
+            this.timeDisplayManager.setTimeFormat(e.target.value);
+        });
+        
+        document.getElementById('date-format-select').addEventListener('change', (e) => {
+            this.timeDisplayManager.setDateFormat(e.target.value);
+        });
+        
+        // Time color buttons
+        document.querySelectorAll('.color-btn[data-time-color]').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                this.timeDisplayManager.setColor(e.target.dataset.timeColor);
+                document.querySelectorAll('.color-btn[data-time-color]').forEach(b => b.classList.remove('active'));
+                e.target.classList.add('active');
+            });
+        });
+        
+        const customTimeColorPicker = document.getElementById('custom-time-color-picker');
+        customTimeColorPicker.addEventListener('input', (e) => {
+            this.timeDisplayManager.setColor(e.target.value);
+            document.querySelectorAll('.color-btn[data-time-color]').forEach(b => b.classList.remove('active'));
+        });
+        
+        // Time background color buttons
+        document.querySelectorAll('.color-btn[data-time-bg-color]').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                this.timeDisplayManager.setBgColor(e.target.dataset.timeBgColor);
+                document.querySelectorAll('.color-btn[data-time-bg-color]').forEach(b => b.classList.remove('active'));
+                e.target.classList.add('active');
+            });
+        });
+        
+        const customTimeBgColorPicker = document.getElementById('custom-time-bg-color-picker');
+        customTimeBgColorPicker.addEventListener('input', (e) => {
+            this.timeDisplayManager.setBgColor(e.target.value);
+            document.querySelectorAll('.color-btn[data-time-bg-color]').forEach(b => b.classList.remove('active'));
+        });
+        
+        // Time fullscreen enabled checkbox
+        document.getElementById('time-fullscreen-enabled-checkbox').addEventListener('change', (e) => {
+            this.timeDisplayManager.setFullscreenEnabled(e.target.checked);
+        });
+        
+        // Fullscreen font size slider and input
+        const timeFullscreenFontSizeSlider = document.getElementById('time-fullscreen-font-size-slider');
+        const timeFullscreenFontSizeValue = document.getElementById('time-fullscreen-font-size-value');
+        const timeFullscreenFontSizeInput = document.getElementById('time-fullscreen-font-size-input');
+        
+        if (timeFullscreenFontSizeSlider && timeFullscreenFontSizeValue && timeFullscreenFontSizeInput) {
+            timeFullscreenFontSizeSlider.addEventListener('input', (e) => {
+                const size = parseInt(e.target.value);
+                timeFullscreenFontSizeValue.textContent = size;
+                timeFullscreenFontSizeInput.value = size;
+                this.timeDisplayManager.setFullscreenFontSize(size);
+            });
+            
+            timeFullscreenFontSizeInput.addEventListener('change', (e) => {
+                const size = parseInt(e.target.value);
+                if (size >= 8 && size <= 25) {
+                    timeFullscreenFontSizeValue.textContent = size;
+                    timeFullscreenFontSizeSlider.value = size;
+                    this.timeDisplayManager.setFullscreenFontSize(size);
+                }
+            });
+        }
+        
+        // Font size slider and input
+        const timeFontSizeSlider = document.getElementById('time-font-size-slider');
+        const timeFontSizeValue = document.getElementById('time-font-size-value');
+        const timeFontSizeInput = document.getElementById('time-font-size-input');
+        
+        timeFontSizeSlider.addEventListener('input', (e) => {
+            const size = parseInt(e.target.value);
+            timeFontSizeValue.textContent = size;
+            timeFontSizeInput.value = size;
+            this.timeDisplayManager.setFontSize(size);
+        });
+        
+        timeFontSizeInput.addEventListener('change', (e) => {
+            const size = parseInt(e.target.value);
+            if (size >= 12 && size <= 48) {
+                timeFontSizeValue.textContent = size;
+                timeFontSizeSlider.value = size;
+                this.timeDisplayManager.setFontSize(size);
+            }
+        });
+        
+        // Opacity slider and input
+        const timeOpacitySlider = document.getElementById('time-opacity-slider');
+        const timeOpacityValue = document.getElementById('time-opacity-value');
+        const timeOpacityInput = document.getElementById('time-opacity-input');
+        
+        timeOpacitySlider.addEventListener('input', (e) => {
+            const opacity = parseInt(e.target.value);
+            timeOpacityValue.textContent = opacity;
+            timeOpacityInput.value = opacity;
+            this.timeDisplayManager.setOpacity(opacity);
+        });
+        
+        timeOpacityInput.addEventListener('change', (e) => {
+            const opacity = parseInt(e.target.value);
+            if (opacity >= 10 && opacity <= 100) {
+                timeOpacityValue.textContent = opacity;
+                timeOpacitySlider.value = opacity;
+                this.timeDisplayManager.setOpacity(opacity);
             }
         });
         
@@ -600,6 +970,82 @@ class DrawingBoard {
             if (e.key === 'Escape') {
                 this.closeSettings();
                 this.closeConfigPanel();
+            }
+        });
+        
+        // Listen for image confirmed event from background image controls
+        window.addEventListener('imageConfirmed', () => {
+            // Auto-switch to pen tool when user confirms background image
+            if (this.drawingEngine.currentTool === 'background') {
+                this.setTool('pen', false);
+            }
+        });
+    }
+    
+    repositionToolbarsOnResize() {
+        // Ensure all toolbars and panels stay within viewport after window resize
+        const EDGE_SPACING = 10; // Minimum spacing from viewport edges
+        const panels = [
+            document.getElementById('history-controls'),
+            document.getElementById('config-area'),
+            document.getElementById('toolbar'),
+            document.getElementById('pagination-controls')
+        ];
+        
+        const windowWidth = window.innerWidth;
+        const windowHeight = window.innerHeight;
+        
+        panels.forEach(panel => {
+            if (!panel) return;
+            
+            const rect = panel.getBoundingClientRect();
+            const computedStyle = window.getComputedStyle(panel);
+            
+            // Get current position
+            let left = parseFloat(computedStyle.left) || 0;
+            let top = parseFloat(computedStyle.top) || 0;
+            let right = computedStyle.right !== 'auto' ? parseFloat(computedStyle.right) : null;
+            let bottom = computedStyle.bottom !== 'auto' ? parseFloat(computedStyle.bottom) : null;
+            
+            // Check if panel is positioned and might overflow
+            const hasCustomPosition = computedStyle.left !== 'auto' || computedStyle.top !== 'auto' || 
+                                     computedStyle.right !== 'auto' || computedStyle.bottom !== 'auto';
+            
+            if (!hasCustomPosition) return;
+            
+            // Adjust position if overflowing
+            if (right !== null) {
+                // Panel is right-aligned - check if actual left position would be negative
+                const actualLeft = windowWidth - right - rect.width;
+                if (actualLeft < 0) {
+                    panel.style.right = `${EDGE_SPACING}px`;
+                }
+            } else if (left + rect.width > windowWidth - EDGE_SPACING) {
+                // Panel overflows right edge (accounting for edge spacing)
+                const newLeft = Math.max(EDGE_SPACING, windowWidth - rect.width - EDGE_SPACING);
+                panel.style.left = `${newLeft}px`;
+                panel.style.right = 'auto';
+            }
+            
+            if (bottom !== null) {
+                // Panel is bottom-aligned - check if actual top position would be negative
+                const actualTop = windowHeight - bottom - rect.height;
+                if (actualTop < 0) {
+                    panel.style.bottom = `${EDGE_SPACING}px`;
+                }
+            } else if (top + rect.height > windowHeight - EDGE_SPACING) {
+                // Panel overflows bottom edge (accounting for edge spacing)
+                const newTop = Math.max(EDGE_SPACING, windowHeight - rect.height - EDGE_SPACING);
+                panel.style.top = `${newTop}px`;
+                panel.style.bottom = 'auto';
+            }
+            
+            // Also ensure panel doesn't overflow left or top edges
+            if (left < EDGE_SPACING) {
+                panel.style.left = `${EDGE_SPACING}px`;
+            }
+            if (top < EDGE_SPACING) {
+                panel.style.top = `${EDGE_SPACING}px`;
             }
         });
     }
@@ -723,10 +1169,27 @@ class DrawingBoard {
         } else {
             this.hideEraserCursor();
         }
+        
         this.updateUI();
         
-        if (showConfig && (tool === 'pen' || tool === 'eraser' || tool === 'background')) {
+        // 使用"移动"功能时隐藏config-area
+        if (tool === 'pan') {
+            document.getElementById('config-area').classList.remove('show');
+        } else if (showConfig && (tool === 'pen' || tool === 'eraser' || tool === 'background' || tool === 'more')) {
             document.getElementById('config-area').classList.add('show');
+            
+            // Update More config panel state
+            if (tool === 'more') {
+                const showDateCheckboxMore = document.getElementById('show-date-checkbox-more');
+                const showTimeCheckboxMore = document.getElementById('show-time-checkbox-more');
+                
+                if (showDateCheckboxMore) {
+                    showDateCheckboxMore.checked = this.timeDisplayManager.showDate;
+                }
+                if (showTimeCheckboxMore) {
+                    showTimeCheckboxMore.checked = this.timeDisplayManager.showTime;
+                }
+            }
         }
     }
     
@@ -743,6 +1206,66 @@ class DrawingBoard {
     
     openSettings() {
         document.getElementById('settings-modal').classList.add('show');
+        
+        // Update time display settings UI with current values
+        const timeDisplayCheckbox = document.getElementById('show-time-display-checkbox');
+        timeDisplayCheckbox.checked = this.timeDisplayManager.enabled;
+        
+        // Show/hide time display settings based on enabled state
+        const timeDisplaySettings = document.getElementById('time-display-settings');
+        const timezoneSettings = document.getElementById('timezone-settings');
+        const timeFormatSettings = document.getElementById('time-format-settings');
+        const dateFormatSettings = document.getElementById('date-format-settings');
+        const timeColorSettings = document.getElementById('time-color-settings');
+        const timeFontSizeSettings = document.getElementById('time-font-size-settings');
+        const timeOpacitySettings = document.getElementById('time-opacity-settings');
+        const timeFullscreenSettings = document.getElementById('time-fullscreen-settings');
+        const timeFullscreenFontSizeSettings = document.getElementById('time-fullscreen-font-size-settings');
+        
+        const isEnabled = this.timeDisplayManager.enabled;
+        timeDisplaySettings.style.display = isEnabled ? 'flex' : 'none';
+        timezoneSettings.style.display = isEnabled ? 'flex' : 'none';
+        timeFormatSettings.style.display = isEnabled ? 'flex' : 'none';
+        dateFormatSettings.style.display = isEnabled ? 'flex' : 'none';
+        timeColorSettings.style.display = isEnabled ? 'flex' : 'none';
+        timeFontSizeSettings.style.display = isEnabled ? 'flex' : 'none';
+        timeOpacitySettings.style.display = isEnabled ? 'flex' : 'none';
+        timeFullscreenSettings.style.display = isEnabled ? 'flex' : 'none';
+        timeFullscreenFontSizeSettings.style.display = isEnabled ? 'flex' : 'none';
+        
+        // Set active display type button
+        document.querySelectorAll('.display-option-btn').forEach(btn => btn.classList.remove('active'));
+        let displayType = 'both';
+        if (this.timeDisplayManager.showDate && !this.timeDisplayManager.showTime) {
+            displayType = 'date-only';
+        } else if (!this.timeDisplayManager.showDate && this.timeDisplayManager.showTime) {
+            displayType = 'time-only';
+        }
+        const activeBtn = document.querySelector(`.display-option-btn[data-display-type="${displayType}"]`);
+        if (activeBtn) activeBtn.classList.add('active');
+        
+        // Set timezone selector
+        document.getElementById('timezone-select').value = this.timeDisplayManager.timezone;
+        
+        document.getElementById('time-format-select').value = this.timeDisplayManager.timeFormat;
+        document.getElementById('date-format-select').value = this.timeDisplayManager.dateFormat;
+        document.getElementById('time-font-size-slider').value = this.timeDisplayManager.fontSize;
+        document.getElementById('time-font-size-value').textContent = this.timeDisplayManager.fontSize;
+        document.getElementById('time-font-size-input').value = this.timeDisplayManager.fontSize;
+        document.getElementById('time-opacity-slider').value = this.timeDisplayManager.opacity;
+        document.getElementById('time-opacity-value').textContent = this.timeDisplayManager.opacity;
+        document.getElementById('time-opacity-input').value = this.timeDisplayManager.opacity;
+        document.getElementById('custom-time-color-picker').value = this.timeDisplayManager.color;
+        const defaultBgColor = '#FFFFFF'; // Default background color constant
+        document.getElementById('custom-time-bg-color-picker').value = this.timeDisplayManager.bgColor === 'transparent' ? defaultBgColor : this.timeDisplayManager.bgColor;
+        document.getElementById('time-fullscreen-enabled-checkbox').checked = this.timeDisplayManager.fullscreenEnabled;
+        
+        // Set fullscreen font size values
+        if (document.getElementById('time-fullscreen-font-size-slider')) {
+            document.getElementById('time-fullscreen-font-size-slider').value = this.timeDisplayManager.fullscreenFontSize;
+            document.getElementById('time-fullscreen-font-size-value').textContent = this.timeDisplayManager.fullscreenFontSize;
+            document.getElementById('time-fullscreen-font-size-input').value = this.timeDisplayManager.fullscreenFontSize;
+        }
     }
     
     closeSettings() {
@@ -784,6 +1307,10 @@ class DrawingBoard {
         } else if (tool === 'background') {
             document.getElementById('background-btn').classList.add('active');
             document.getElementById('background-config').classList.add('active');
+            this.canvas.style.cursor = 'default';
+        } else if (tool === 'more') {
+            document.getElementById('more-btn').classList.add('active');
+            document.getElementById('more-config').classList.add('active');
             this.canvas.style.cursor = 'default';
         }
         
@@ -855,20 +1382,20 @@ class DrawingBoard {
             
             this.backgroundManager.drawBackground();
         } else {
-            // In infinite canvas mode, canvas fills the viewport
+            // In infinite canvas mode, canvas fills the viewport and is centered
             this.canvas.style.position = 'absolute';
-            this.canvas.style.left = '0';
-            this.canvas.style.top = '0';
+            this.canvas.style.left = '50%';
+            this.canvas.style.top = '50%';
             this.canvas.style.width = '100%';
             this.canvas.style.height = '100%';
-            this.canvas.style.transform = `scale(${this.drawingEngine.canvasScale})`;
+            this.canvas.style.transform = `translate(-50%, -50%) scale(${this.drawingEngine.canvasScale})`;
             
             this.bgCanvas.style.position = 'absolute';
-            this.bgCanvas.style.left = '0';
-            this.bgCanvas.style.top = '0';
+            this.bgCanvas.style.left = '50%';
+            this.bgCanvas.style.top = '50%';
             this.bgCanvas.style.width = '100%';
             this.bgCanvas.style.height = '100%';
-            this.bgCanvas.style.transform = `scale(${this.drawingEngine.canvasScale})`;
+            this.bgCanvas.style.transform = `translate(-50%, -50%) scale(${this.drawingEngine.canvasScale})`;
             
             this.resizeCanvas();
         }
@@ -880,7 +1407,7 @@ class DrawingBoard {
         const newScale = Math.min(currentScale + 0.1, 3.0);
         this.drawingEngine.canvasScale = newScale;
         this.updateZoomUI();
-        this.applyZoom();
+        this.applyZoom(false); // Don't update config-area scale on zoom
         localStorage.setItem('canvasScale', newScale);
     }
     
@@ -889,7 +1416,7 @@ class DrawingBoard {
         const newScale = Math.max(currentScale - 0.1, 0.5);
         this.drawingEngine.canvasScale = newScale;
         this.updateZoomUI();
-        this.applyZoom();
+        this.applyZoom(false); // Don't update config-area scale on zoom
         localStorage.setItem('canvasScale', newScale);
     }
     
@@ -903,25 +1430,48 @@ class DrawingBoard {
         const newScale = percent / 100;
         this.drawingEngine.canvasScale = newScale;
         this.updateZoomUI();
-        this.applyZoom();
+        this.applyZoom(false); // Don't update config-area scale on zoom
         localStorage.setItem('canvasScale', newScale);
     }
     
-    applyZoom() {
+    applyZoom(updateConfigScale = true) {
         // Apply zoom using CSS transform for better performance
+        const panX = this.drawingEngine.panOffset.x;
+        const panY = this.drawingEngine.panOffset.y;
+        const scale = this.drawingEngine.canvasScale;
+        
         if (!this.settingsManager.infiniteCanvas) {
-            // In paginated mode, keep centering
-            const transform = `translate(-50%, -50%) scale(${this.drawingEngine.canvasScale})`;
+            // In paginated mode, keep centering and add pan
+            const transform = `translate(-50%, -50%) translate(${panX}px, ${panY}px) scale(${scale})`;
             this.canvas.style.transform = transform;
             this.bgCanvas.style.transform = transform;
         } else {
-            // In infinite mode, simple scale
-            const transform = `scale(${this.drawingEngine.canvasScale})`;
+            // In infinite mode, center the canvas and apply scale with pan
+            this.canvas.style.left = '50%';
+            this.canvas.style.top = '50%';
+            this.bgCanvas.style.left = '50%';
+            this.bgCanvas.style.top = '50%';
+            const transform = `translate(-50%, -50%) translate(${panX}px, ${panY}px) scale(${scale})`;
             this.canvas.style.transform = transform;
             this.bgCanvas.style.transform = transform;
         }
         this.canvas.style.transformOrigin = 'center center';
         this.bgCanvas.style.transformOrigin = 'center center';
+        
+        // Update config-area scale proportionally only when requested (on resize, not on refresh)
+        if (updateConfigScale) {
+            this.updateConfigAreaScale();
+        }
+    }
+    
+    updateConfigAreaScale() {
+        const configArea = document.getElementById('config-area');
+        const scale = this.drawingEngine.canvasScale;
+        
+        // Apply proportional scaling to config-area
+        // The scale is relative to 100% (1.0)
+        configArea.style.transform = `translateX(-50%) scale(${scale})`;
+        configArea.style.transformOrigin = 'center bottom';
     }
     
     updateZoomUI() {
@@ -1017,13 +1567,21 @@ class DrawingBoard {
             if (e.ctrlKey || e.metaKey) {
                 e.preventDefault();
                 
-                // Get mouse position relative to canvas
-                const rect = this.canvas.getBoundingClientRect();
-                const mouseX = e.clientX - rect.left;
-                const mouseY = e.clientY - rect.top;
+                // Get mouse position relative to viewport
+                const mouseX = e.clientX;
+                const mouseY = e.clientY;
                 
-                // Get current scale
+                // Get canvas position and dimensions
+                const rect = this.canvas.getBoundingClientRect();
+                
+                // Calculate mouse position relative to canvas (in screen space)
+                const mouseCanvasX = mouseX - rect.left;
+                const mouseCanvasY = mouseY - rect.top;
+                
+                // Get current scale and pan
                 const oldScale = this.drawingEngine.canvasScale;
+                const oldPanX = this.drawingEngine.panOffset.x;
+                const oldPanY = this.drawingEngine.panOffset.y;
                 
                 // Calculate new scale
                 const delta = e.deltaY;
@@ -1034,30 +1592,33 @@ class DrawingBoard {
                     newScale = Math.max(oldScale - 0.1, 0.5);
                 }
                 
-                // Calculate the zoom factor
-                const scaleFactor = newScale / oldScale;
+                // Calculate scale ratio
+                const scaleRatio = newScale / oldScale;
                 
-                // Calculate the position of the mouse relative to the center of the canvas
-                const centerX = rect.width / 2;
-                const centerY = rect.height / 2;
-                const offsetX = mouseX - centerX;
-                const offsetY = mouseY - centerY;
+                // Get canvas center in screen space
+                const canvasCenterX = rect.width / 2;
+                const canvasCenterY = rect.height / 2;
                 
-                // Adjust transform origin to mouse position for smooth zoom
-                this.canvas.style.transformOrigin = `${mouseX}px ${mouseY}px`;
-                this.bgCanvas.style.transformOrigin = `${mouseX}px ${mouseY}px`;
+                // Calculate offset from canvas center to mouse (in screen space)
+                const offsetX = mouseCanvasX - canvasCenterX;
+                const offsetY = mouseCanvasY - canvasCenterY;
+                
+                // Adjust pan offset so that the point under the mouse stays in place
+                // When zooming in (scaleRatio > 1), we need to pan towards the mouse
+                // When zooming out (scaleRatio < 1), we need to pan away from the mouse
+                // Formula: new_pan = old_pan + offset * (1 - scaleRatio)
+                this.drawingEngine.panOffset.x = oldPanX + offsetX * (1 - scaleRatio);
+                this.drawingEngine.panOffset.y = oldPanY + offsetY * (1 - scaleRatio);
                 
                 // Update scale
                 this.drawingEngine.canvasScale = newScale;
                 this.updateZoomUI();
-                this.applyZoom();
-                localStorage.setItem('canvasScale', newScale);
+                this.applyZoom(false); // Don't update config-area scale on zoom
                 
-                // Reset transform origin after a short delay to allow for smooth zooming
-                setTimeout(() => {
-                    this.canvas.style.transformOrigin = 'center center';
-                    this.bgCanvas.style.transformOrigin = 'center center';
-                }, 100);
+                // Save to localStorage
+                localStorage.setItem('canvasScale', newScale);
+                localStorage.setItem('panOffsetX', this.drawingEngine.panOffset.x);
+                localStorage.setItem('panOffsetY', this.drawingEngine.panOffset.y);
             }
         }, { passive: false });
     }
@@ -1336,7 +1897,7 @@ class DrawingBoard {
             const newScale = Math.max(0.5, Math.min(3.0, this.drawingEngine.canvasScale * scale));
             
             this.drawingEngine.canvasScale = newScale;
-            this.applyZoom();
+            this.applyZoom(false); // Don't update config-area scale on zoom
             this.updateZoomUI();
             localStorage.setItem('canvasScale', newScale);
             
@@ -1379,39 +1940,23 @@ class DrawingBoard {
         };
     }
     
-    redrawCanvas() {
-        // Save current canvas content
-        const tempCanvas = document.createElement('canvas');
-        tempCanvas.width = this.canvas.width;
-        tempCanvas.height = this.canvas.height;
-        const tempCtx = tempCanvas.getContext('2d');
-        tempCtx.drawImage(this.canvas, 0, 0);
+    applyPanTransform() {
+        // Apply pan offset using CSS transform for better performance
+        const panX = this.drawingEngine.panOffset.x;
+        const panY = this.drawingEngine.panOffset.y;
+        const scale = this.drawingEngine.canvasScale;
         
-        // Save current background content
-        const tempBgCanvas = document.createElement('canvas');
-        tempBgCanvas.width = this.bgCanvas.width;
-        tempBgCanvas.height = this.bgCanvas.height;
-        const tempBgCtx = tempBgCanvas.getContext('2d');
-        tempBgCtx.drawImage(this.bgCanvas, 0, 0);
-        
-        // Clear and restore with pan transformations for drawing canvas
-        const dpr = window.devicePixelRatio || 1;
-        this.ctx.save();
-        this.ctx.setTransform(1, 0, 0, 1, 0, 0);
-        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-        this.ctx.scale(dpr, dpr);
-        this.ctx.translate(this.drawingEngine.panOffset.x, this.drawingEngine.panOffset.y);
-        this.ctx.drawImage(tempCanvas, 0, 0, this.canvas.width / dpr, this.canvas.height / dpr);
-        this.ctx.restore();
-        
-        // Clear and restore with pan transformations for background canvas
-        this.bgCtx.save();
-        this.bgCtx.setTransform(1, 0, 0, 1, 0, 0);
-        this.bgCtx.clearRect(0, 0, this.bgCanvas.width, this.bgCanvas.height);
-        this.bgCtx.scale(dpr, dpr);
-        this.bgCtx.translate(this.drawingEngine.panOffset.x, this.drawingEngine.panOffset.y);
-        this.bgCtx.drawImage(tempBgCanvas, 0, 0, this.bgCanvas.width / dpr, this.bgCanvas.height / dpr);
-        this.bgCtx.restore();
+        if (!this.settingsManager.infiniteCanvas) {
+            // In paginated mode, combine translate and scale
+            const transform = `translate(-50%, -50%) translate(${panX}px, ${panY}px) scale(${scale})`;
+            this.canvas.style.transform = transform;
+            this.bgCanvas.style.transform = transform;
+        } else {
+            // In infinite mode, combine translate and scale
+            const transform = `translate(${panX}px, ${panY}px) scale(${scale})`;
+            this.canvas.style.transform = transform;
+            this.bgCanvas.style.transform = transform;
+        }
     }
     
     loadUploadedImages() {
@@ -1480,6 +2025,22 @@ class DrawingBoard {
             const uploadBtn = patternGrid.querySelector('#image-pattern-btn');
             patternGrid.insertBefore(btn, uploadBtn);
         });
+    }
+    
+    dragCoordinateOrigin(e) {
+        if (!this.isDraggingCoordinateOrigin) return;
+        
+        const deltaX = e.clientX - this.coordinateOriginDragStart.x;
+        const deltaY = e.clientY - this.coordinateOriginDragStart.y;
+        
+        const origin = this.backgroundManager.getCoordinateOrigin();
+        this.backgroundManager.setCoordinateOrigin(origin.x + deltaX, origin.y + deltaY);
+        
+        this.coordinateOriginDragStart = { x: e.clientX, y: e.clientY };
+    }
+    
+    stopDraggingCoordinateOrigin() {
+        this.isDraggingCoordinateOrigin = false;
     }
 }
 
