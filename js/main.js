@@ -154,6 +154,9 @@ class DrawingBoard {
         if (this.shapeInsertionManager) {
             this.shapeInsertionManager.redrawCanvas();
         }
+        
+        // Re-center the canvas after resize
+        this.centerCanvas();
     }
     
     setupEventListeners() {
