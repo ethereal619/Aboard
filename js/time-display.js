@@ -91,12 +91,7 @@ class TimeDisplayManager {
     }
     
     formatTime(date) {
-        const hours = date.getHours();
-        const minutes = date.getMinutes();
-        const seconds = date.getSeconds();
-        
         // Apply timezone conversion
-        let tzDate = date;
         try {
             // Convert to specified timezone using toLocaleString
             const options = { 
@@ -108,21 +103,17 @@ class TimeDisplayManager {
             };
             const timeStr = date.toLocaleString('en-US', options);
             
-            // Parse the formatted string back to get hours, minutes, seconds
+            // Parse the formatted string to get hours, minutes, seconds
             if (this.timeFormat === '12h') {
                 // Format: "09:37:03 AM" or "09:37:03 PM"
-                const parts = timeStr.match(/(\d+):(\d+):(\d+)\s*(AM|PM)?/);
+                const parts = timeStr.match(/(\d+):(\d+):(\d+)\s*(AM|PM)/i);
                 if (parts) {
-                    let h = parseInt(parts[1]);
+                    const hour12 = parseInt(parts[1]);
                     const m = parseInt(parts[2]);
                     const s = parseInt(parts[3]);
-                    const period = parts[4];
+                    const period = parts[4].toUpperCase();
                     
-                    if (period === 'PM' && h !== 12) h += 12;
-                    if (period === 'AM' && h === 12) h = 0;
-                    
-                    const hour12 = h % 12 || 12;
-                    const ampm = h >= 12 ? '下午' : '上午';
+                    const ampm = period === 'PM' ? '下午' : '上午';
                     return `${ampm} ${this.padZero(hour12)}:${this.padZero(m)}:${this.padZero(s)}`;
                 }
             } else {
@@ -137,6 +128,10 @@ class TimeDisplayManager {
         }
         
         // Fallback to local time
+        const hours = date.getHours();
+        const minutes = date.getMinutes();
+        const seconds = date.getSeconds();
+        
         if (this.timeFormat === '12h') {
             const hour12 = hours % 12 || 12;
             const ampm = hours >= 12 ? '下午' : '上午';
