@@ -15,6 +15,8 @@ class TimeDisplayManager {
         this.opacity = parseInt(localStorage.getItem('timeDisplayOpacity')) || 100;
         this.showDate = localStorage.getItem('timeDisplayShowDate') !== 'false'; // Default true
         this.showTime = localStorage.getItem('timeDisplayShowTime') !== 'false'; // Default true
+        // Get user's current timezone by default, or use saved value
+        this.timezone = localStorage.getItem('timeDisplayTimezone') || Intl.DateTimeFormat().resolvedOptions().timeZone;
         
         this.applySettings();
     }
@@ -62,7 +64,7 @@ class TimeDisplayManager {
     }
     
     updateDisplay() {
-        const now = new Date();
+        const now = this.getCurrentTime();
         const timeString = this.formatTime(now);
         const dateString = this.formatDate(now);
         
@@ -75,6 +77,45 @@ class TimeDisplayManager {
         }
         
         this.timeDisplayElement.innerHTML = html;
+    }
+    
+    getCurrentTime() {
+        // Get current time in the specified timezone
+        try {
+            const date = new Date();
+            // Convert to specified timezone
+            const options = { timeZone: this.timezone };
+            const formatter = new Intl.DateTimeFormat('en-US', {
+                ...options,
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+                hour12: false
+            });
+            
+            const parts = {};
+            formatter.formatToParts(date).forEach(part => {
+                parts[part.type] = part.value;
+            });
+            
+            // Create a new Date object with timezone-adjusted values
+            const tzDate = new Date(
+                parseInt(parts.year),
+                parseInt(parts.month) - 1,
+                parseInt(parts.day),
+                parseInt(parts.hour),
+                parseInt(parts.minute),
+                parseInt(parts.second)
+            );
+            
+            return tzDate;
+        } catch (e) {
+            console.error('Invalid timezone, using local time:', e);
+            return new Date();
+        }
     }
     
     formatTime(date) {
@@ -127,6 +168,14 @@ class TimeDisplayManager {
     setDateFormat(format) {
         this.dateFormat = format;
         localStorage.setItem('timeDisplayDateFormat', format);
+        if (this.enabled) {
+            this.updateDisplay();
+        }
+    }
+    
+    setTimezone(timezone) {
+        this.timezone = timezone;
+        localStorage.setItem('timeDisplayTimezone', timezone);
         if (this.enabled) {
             this.updateDisplay();
         }
