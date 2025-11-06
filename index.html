@@ -127,14 +127,6 @@
             </div>
         </div>
 
-        <!-- Shape configuration -->
-        <div id="shape-config" class="config-panel">
-            <div class="config-group">
-                <label>线段</label>
-                <p class="settings-hint">使用当前笔的颜色和粗细绘制直线。点击画布确定第一个点，移动鼠标预览，再次点击完成绘制。按 Esc 取消。</p>
-            </div>
-        </div>
-
         <!-- Eraser configuration -->
         <div id="eraser-config" class="config-panel">
             <div class="config-group">
@@ -604,7 +596,7 @@
                                 <option value="UTC">UTC (协调世界时)</option>
                             </select>
                         </div>
-                        <div class="settings-group">
+                        <div class="settings-group" id="time-format-settings" style="display: none;">
                             <label>时间格式</label>
                             <p class="settings-hint">选择时间的显示格式</p>
                             <select id="time-format-select" class="format-select">
@@ -612,7 +604,7 @@
                                 <option value="24h">24小时制</option>
                             </select>
                         </div>
-                        <div class="settings-group">
+                        <div class="settings-group" id="date-format-settings" style="display: none;">
                             <label>日期格式</label>
                             <p class="settings-hint">选择日期的显示格式</p>
                             <select id="date-format-select" class="format-select">
@@ -622,7 +614,7 @@
                                 <option value="chinese">中文 (2024年1月1日)</option>
                             </select>
                         </div>
-                        <div class="settings-group">
+                        <div class="settings-group" id="time-color-settings" style="display: none;">
                             <label>字体颜色</label>
                             <p class="settings-hint">选择时间显示的颜色</p>
                             <div class="color-picker-row">
@@ -647,7 +639,7 @@
                                 <input type="color" id="custom-time-color-picker" class="custom-color-picker-input" value="#000000">
                             </label>
                         </div>
-                        <div class="settings-group">
+                        <div class="settings-group" id="time-font-size-settings" style="display: none;">
                             <label>字体大小 <span id="time-font-size-value">16</span>px</label>
                             <p class="settings-hint">调整时间显示的字体大小</p>
                             <div style="display: flex; gap: 10px; align-items: center;">
@@ -655,7 +647,7 @@
                                 <input type="number" id="time-font-size-input" min="12" max="48" value="16" class="size-input">
                             </div>
                         </div>
-                        <div class="settings-group">
+                        <div class="settings-group" id="time-opacity-settings" style="display: none;">
                             <label>透明度 <span id="time-opacity-value">100</span>%</label>
                             <p class="settings-hint">调整时间显示的透明度</p>
                             <div style="display: flex; gap: 10px; align-items: center;">
@@ -726,20 +718,12 @@
             </svg>
             <span>笔</span>
         </button>
-        <button id="select-btn" class="tool-btn" data-tool="select" title="选择 (可选择笔迹、图片和形状)">
+        <button id="select-btn" class="tool-btn" data-tool="select" title="选择 (可选择笔迹和图片)">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M3 3l7.07 16.97 2.51-7.39 7.39-2.51L3 3z"></path>
                 <path d="M13 13l6 6"></path>
             </svg>
             <span>选择</span>
-        </button>
-        <button id="shape-btn" class="tool-btn" data-tool="shape" title="插入形状">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <rect x="3" y="3" width="7" height="7"></rect>
-                <circle cx="17.5" cy="6.5" r="3.5"></circle>
-                <path d="M14 17l3-5 3 5z"></path>
-            </svg>
-            <span>形状</span>
         </button>
         <button id="pan-btn" class="tool-btn" data-tool="pan" title="移动画布 (Shift+拖动)">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -772,13 +756,6 @@
             </svg>
             <span>清空</span>
         </button>
-        <button id="settings-btn" class="tool-btn" data-tool="settings" title="设置">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <circle cx="12" cy="12" r="3"></circle>
-                <path d="M12 1v6m0 6v6M5.6 5.6l4.2 4.2m4.2 4.2l4.2 4.2M1 12h6m6 0h6M5.6 18.4l4.2-4.2m4.2-4.2l4.2-4.2"></path>
-            </svg>
-            <span>设置</span>
-        </button>
         <button id="more-btn" class="tool-btn" data-tool="more" title="更多">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <circle cx="12" cy="12" r="1"></circle>
@@ -786,6 +763,13 @@
                 <circle cx="12" cy="19" r="1"></circle>
             </svg>
             <span>更多</span>
+        </button>
+        <button id="settings-btn" class="tool-btn" data-tool="settings" title="设置">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="3"></circle>
+                <path d="M12 1v6m0 6v6M5.6 5.6l4.2 4.2m4.2 4.2l4.2 4.2M1 12h6m6 0h6M5.6 18.4l4.2-4.2m4.2-4.2l4.2-4.2"></path>
+            </svg>
+            <span>设置</span>
         </button>
     </div>
 
@@ -798,7 +782,6 @@
     <script src="js/image-controls.js"></script>
     <script src="js/stroke-controls.js"></script>
     <script src="js/selection.js"></script>
-    <script src="js/shape-insertion.js"></script>
     <script src="js/time-display.js"></script>
     <script src="js/settings.js"></script>
     <script src="js/announcement.js"></script>
