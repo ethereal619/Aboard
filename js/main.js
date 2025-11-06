@@ -22,7 +22,6 @@ class DrawingBoard {
         this.imageControls = new ImageControls(this.backgroundManager);
         this.strokeControls = new StrokeControls(this.drawingEngine, this.canvas, this.ctx, this.historyManager);
         this.selectionManager = new SelectionManager(this.canvas, this.ctx, this.drawingEngine, this.strokeControls);
-        this.shapeInsertionManager = new ShapeInsertionManager(this.canvas, this.ctx, this.historyManager, this.drawingEngine);
         this.timeDisplayManager = new TimeDisplayManager();
         this.settingsManager = new SettingsManager();
         this.announcementManager = new AnnouncementManager();
@@ -150,11 +149,6 @@ class DrawingBoard {
         
         this.backgroundManager.drawBackground();
         
-        // Redraw shapes after resize
-        if (this.shapeInsertionManager) {
-            this.shapeInsertionManager.redrawCanvas();
-        }
-        
         // Re-center the canvas after resize
         this.centerCanvas();
     }
@@ -223,34 +217,9 @@ class DrawingBoard {
                 this.setTool('pen', false); // Don't show config panel
             }
             
-            // Handle shape tool - insert shape at click position
-            if (this.drawingEngine.currentTool === 'shape') {
-                this.shapeInsertionManager.insertShape(e);
-                return;
-            }
-            
-            // Handle selection tool - check for shape objects first
+            // Handle selection tool
             if (this.drawingEngine.currentTool === 'select') {
-                const rect = this.canvas.getBoundingClientRect();
-                const scaleX = this.canvas.offsetWidth / rect.width;
-                const scaleY = this.canvas.offsetHeight / rect.height;
-                let x = (e.clientX - rect.left) * scaleX;
-                let y = (e.clientY - rect.top) * scaleY;
-                
-                // Transform to canvas coordinate space
-                x = (x - this.drawingEngine.panOffset.x) / this.drawingEngine.canvasScale;
-                y = (y - this.drawingEngine.panOffset.y) / this.drawingEngine.canvasScale;
-                
-                // Check if clicking on shape object first
-                const shapeIndex = this.shapeInsertionManager.hitTestShape(x, y);
-                if (shapeIndex >= 0) {
-                    this.shapeInsertionManager.selectShape(shapeIndex);
-                    this.shapeInsertionManager.startDrag(e);
-                    this.updateUI();
-                    return;
-                }
-                
-                // Otherwise, handle normal selection
+                // Handle normal selection
                 this.selectionManager.startSelection(e);
                 this.updateUI();
                 return;
@@ -266,10 +235,6 @@ class DrawingBoard {
         document.addEventListener('mousemove', (e) => {
             if (this.isDraggingCoordinateOrigin) {
                 this.dragCoordinateOrigin(e);
-            } else if (this.shapeInsertionManager.isDrawingShape) {
-                this.shapeInsertionManager.updateShapePreview(e);
-            } else if (this.shapeInsertionManager.isDragging || this.shapeInsertionManager.isResizing || this.shapeInsertionManager.isRotating) {
-                this.shapeInsertionManager.dragShape(e);
             } else if (this.drawingEngine.isPanning) {
                 this.drawingEngine.pan(e);
                 this.applyPanTransform();
@@ -283,8 +248,6 @@ class DrawingBoard {
         
         document.addEventListener('mouseup', () => {
             this.stopDraggingCoordinateOrigin();
-            // Don't finish shape on mouseup anymore - shapes finish on second click
-            this.shapeInsertionManager.stopDrag();
             this.handleDrawingComplete();
             this.drawingEngine.stopPanning();
         });
@@ -345,7 +308,6 @@ class DrawingBoard {
         // Toolbar buttons
         document.getElementById('pen-btn').addEventListener('click', () => this.setTool('pen'));
         document.getElementById('select-btn').addEventListener('click', () => this.setTool('select'));
-        document.getElementById('shape-btn').addEventListener('click', () => this.setTool('shape'));
         document.getElementById('pan-btn').addEventListener('click', () => this.setTool('pan'));
         document.getElementById('eraser-btn').addEventListener('click', () => this.setTool('eraser'));
         document.getElementById('background-btn').addEventListener('click', () => this.setTool('background'));
@@ -361,10 +323,6 @@ class DrawingBoard {
                 // Clear stroke selection as strokes are no longer valid
                 this.drawingEngine.clearStrokes();
                 this.updateUI();
-                // Redraw shapes after undo
-                if (this.shapeInsertionManager) {
-                    this.shapeInsertionManager.redrawCanvas();
-                }
             }
         });
         
@@ -373,10 +331,6 @@ class DrawingBoard {
                 // Clear stroke selection as strokes are no longer valid
                 this.drawingEngine.clearStrokes();
                 this.updateUI();
-                // Redraw shapes after redo
-                if (this.shapeInsertionManager) {
-                    this.shapeInsertionManager.redrawCanvas();
-                }
             }
         });
         
@@ -598,19 +552,13 @@ class DrawingBoard {
         
         // Selection tool buttons
         document.getElementById('select-copy-btn').addEventListener('click', () => {
-            // Try shape copy first, then selection copy
-            if (this.shapeInsertionManager.hasSelection()) {
-                this.shapeInsertionManager.copySelectedShape();
-            } else if (this.selectionManager.copySelection()) {
+            if (this.selectionManager.copySelection()) {
                 this.historyManager.saveState();
             }
         });
         
         document.getElementById('select-delete-btn').addEventListener('click', () => {
-            // Try shape delete first, then selection delete
-            if (this.shapeInsertionManager.hasSelection()) {
-                this.shapeInsertionManager.deleteSelectedShape();
-            } else if (this.selectionManager.deleteSelection()) {
+            if (this.selectionManager.deleteSelection()) {
                 this.historyManager.saveState();
             }
         });
@@ -825,14 +773,30 @@ class DrawingBoard {
         document.getElementById('show-time-display-checkbox').addEventListener('change', (e) => {
             const timeDisplaySettings = document.getElementById('time-display-settings');
             const timezoneSettings = document.getElementById('timezone-settings');
+            const timeFormatSettings = document.getElementById('time-format-settings');
+            const dateFormatSettings = document.getElementById('date-format-settings');
+            const timeColorSettings = document.getElementById('time-color-settings');
+            const timeFontSizeSettings = document.getElementById('time-font-size-settings');
+            const timeOpacitySettings = document.getElementById('time-opacity-settings');
+            
             if (e.target.checked) {
                 this.timeDisplayManager.show();
                 timeDisplaySettings.style.display = 'block';
                 timezoneSettings.style.display = 'block';
+                timeFormatSettings.style.display = 'flex';
+                dateFormatSettings.style.display = 'flex';
+                timeColorSettings.style.display = 'block';
+                timeFontSizeSettings.style.display = 'flex';
+                timeOpacitySettings.style.display = 'flex';
             } else {
                 this.timeDisplayManager.hide();
                 timeDisplaySettings.style.display = 'none';
                 timezoneSettings.style.display = 'none';
+                timeFormatSettings.style.display = 'none';
+                dateFormatSettings.style.display = 'none';
+                timeColorSettings.style.display = 'none';
+                timeFontSizeSettings.style.display = 'none';
+                timeOpacitySettings.style.display = 'none';
             }
         });
         
@@ -975,10 +939,6 @@ class DrawingBoard {
             if (e.key === 'Escape') {
                 this.closeSettings();
                 this.closeConfigPanel();
-                // Cancel shape drawing if in progress
-                if (this.shapeInsertionManager.isDrawingShape) {
-                    this.shapeInsertionManager.cancelDrawing();
-                }
             }
         });
         
@@ -1182,7 +1142,6 @@ class DrawingBoard {
         // Clear selection when switching away from select tool
         if (tool !== 'select') {
             this.selectionManager.clearSelection();
-            this.shapeInsertionManager.deselectShape();
         }
         
         this.updateUI();
@@ -1190,7 +1149,7 @@ class DrawingBoard {
         // 使用"移动"功能时隐藏config-area
         if (tool === 'pan') {
             document.getElementById('config-area').classList.remove('show');
-        } else if (showConfig && (tool === 'pen' || tool === 'eraser' || tool === 'background' || tool === 'select' || tool === 'shape' || tool === 'more')) {
+        } else if (showConfig && (tool === 'pen' || tool === 'eraser' || tool === 'background' || tool === 'select' || tool === 'more')) {
             document.getElementById('config-area').classList.add('show');
             
             // Update More config panel state
@@ -1213,10 +1172,6 @@ class DrawingBoard {
             this.historyManager.saveState();
             this.closeConfigPanel();
         }
-        // Redraw shapes on top
-        if (this.shapeInsertionManager) {
-            this.shapeInsertionManager.redrawCanvas();
-        }
     }
     
     closeConfigPanel() {
@@ -1233,8 +1188,20 @@ class DrawingBoard {
         // Show/hide time display settings based on enabled state
         const timeDisplaySettings = document.getElementById('time-display-settings');
         const timezoneSettings = document.getElementById('timezone-settings');
-        timeDisplaySettings.style.display = this.timeDisplayManager.enabled ? 'block' : 'none';
-        timezoneSettings.style.display = this.timeDisplayManager.enabled ? 'block' : 'none';
+        const timeFormatSettings = document.getElementById('time-format-settings');
+        const dateFormatSettings = document.getElementById('date-format-settings');
+        const timeColorSettings = document.getElementById('time-color-settings');
+        const timeFontSizeSettings = document.getElementById('time-font-size-settings');
+        const timeOpacitySettings = document.getElementById('time-opacity-settings');
+        
+        const isEnabled = this.timeDisplayManager.enabled;
+        timeDisplaySettings.style.display = isEnabled ? 'block' : 'none';
+        timezoneSettings.style.display = isEnabled ? 'block' : 'none';
+        timeFormatSettings.style.display = isEnabled ? 'flex' : 'none';
+        dateFormatSettings.style.display = isEnabled ? 'flex' : 'none';
+        timeColorSettings.style.display = isEnabled ? 'block' : 'none';
+        timeFontSizeSettings.style.display = isEnabled ? 'flex' : 'none';
+        timeOpacitySettings.style.display = isEnabled ? 'flex' : 'none';
         
         // Set active display type button
         document.querySelectorAll('.display-option-btn').forEach(btn => btn.classList.remove('active'));
@@ -1271,7 +1238,6 @@ class DrawingBoard {
     
     clearCanvas(saveToHistory = true) {
         this.drawingEngine.clearCanvas();
-        this.shapeInsertionManager.clearAllShapes();
         if (saveToHistory) {
             this.historyManager.saveState();
         }
@@ -1295,14 +1261,10 @@ class DrawingBoard {
             document.getElementById('select-btn').classList.add('active');
             document.getElementById('select-config').classList.add('active');
             this.canvas.style.cursor = 'default';
-            // Update selection buttons state - check both selection and shape selection
-            const hasSelection = this.selectionManager.hasSelection() || this.shapeInsertionManager.hasSelection();
+            // Update selection buttons state
+            const hasSelection = this.selectionManager.hasSelection();
             document.getElementById('select-copy-btn').disabled = !hasSelection;
             document.getElementById('select-delete-btn').disabled = !hasSelection;
-        } else if (tool === 'shape') {
-            document.getElementById('shape-btn').classList.add('active');
-            document.getElementById('shape-config').classList.add('active');
-            this.canvas.style.cursor = 'crosshair';
         } else if (tool === 'pan') {
             document.getElementById('pan-btn').classList.add('active');
             this.canvas.style.cursor = 'grab';
