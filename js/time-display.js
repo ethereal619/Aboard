@@ -7,7 +7,7 @@ class TimeDisplayManager {
         this.updateInterval = null;
         
         // Load settings from localStorage
-        this.enabled = localStorage.getItem('timeDisplayEnabled') === 'true' || false;
+        this.enabled = localStorage.getItem('timeDisplayEnabled') === 'true';
         this.timeFormat = localStorage.getItem('timeDisplayTimeFormat') || '24h';
         this.dateFormat = localStorage.getItem('timeDisplayDateFormat') || 'yyyy-mm-dd';
         this.color = localStorage.getItem('timeDisplayColor') || '#000000';

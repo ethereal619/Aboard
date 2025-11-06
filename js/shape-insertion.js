@@ -117,6 +117,19 @@ class ShapeInsertionManager {
         this.redrawCanvas();
     }
     
+    // Helper method to check if shape is too small
+    isShapeTooSmall(shapeObj) {
+        if (!shapeObj) return true;
+        
+        // Lines and arrows only need width check
+        if (shapeObj.type === 'line' || shapeObj.type === 'arrow') {
+            return shapeObj.width < this.MIN_SIZE;
+        }
+        
+        // Other shapes need both width and height checks
+        return shapeObj.width < this.MIN_SIZE || shapeObj.height < this.MIN_SIZE;
+    }
+    
     // Finish drawing shape
     finishDrawingShape() {
         if (!this.isDrawingShape) return;
@@ -126,7 +139,7 @@ class ShapeInsertionManager {
         const shapeObj = this.shapeObjects[this.selectedShapeIndex];
         
         // If shape is too small, remove it
-        if (shapeObj && (shapeObj.width < this.MIN_SIZE || (shapeObj.height < this.MIN_SIZE && shapeObj.type !== 'line' && shapeObj.type !== 'arrow'))) {
+        if (this.isShapeTooSmall(shapeObj)) {
             this.shapeObjects.splice(this.selectedShapeIndex, 1);
             this.selectedShapeIndex = null;
         } else if (this.historyManager) {

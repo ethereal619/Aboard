@@ -267,7 +267,6 @@ class DrawingBoard {
             if (this.isDraggingCoordinateOrigin) {
                 this.dragCoordinateOrigin(e);
             } else if (this.shapeInsertionManager.isDrawingShape) {
-                // Handle shape drag-to-insert
                 this.shapeInsertionManager.continueDrawingShape(e);
             } else if (this.shapeInsertionManager.isDragging || this.shapeInsertionManager.isResizing || this.shapeInsertionManager.isRotating) {
                 this.shapeInsertionManager.dragShape(e);
