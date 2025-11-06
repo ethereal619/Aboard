@@ -13,7 +13,7 @@ class ShapeInsertionManager {
         this.selectedShapeIndex = null;
         
         // Default shape properties
-        this.defaultShapeType = 'line'; // Changed default to 'line'
+        this.defaultShapeType = 'line'; // Default to 'line' as it's the first option in the UI
         this.defaultSize = 100;
         this.defaultColor = '#007AFF';
         this.defaultFillColor = 'rgba(0, 122, 255, 0.2)';
@@ -231,7 +231,9 @@ class ShapeInsertionManager {
         
         if (shapeObj) {
             this.shapeObjects.push(shapeObj);
-            this.selectedShapeIndex = null; // Don't select after creation, as per requirement
+            // Don't select after creation to avoid cluttering the UI with control handles
+            // User can select the shape later if they want to edit it
+            this.selectedShapeIndex = null;
             
             if (this.historyManager) {
                 this.historyManager.saveState();

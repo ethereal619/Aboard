@@ -82,38 +82,10 @@ class TimeDisplayManager {
     getCurrentTime() {
         // Get current time in the specified timezone
         try {
-            const date = new Date();
-            // Convert to specified timezone
-            const options = { timeZone: this.timezone };
-            const formatter = new Intl.DateTimeFormat('en-US', {
-                ...options,
-                year: 'numeric',
-                month: '2-digit',
-                day: '2-digit',
-                hour: '2-digit',
-                minute: '2-digit',
-                second: '2-digit',
-                hour12: false
-            });
-            
-            const parts = {};
-            formatter.formatToParts(date).forEach(part => {
-                parts[part.type] = part.value;
-            });
-            
-            // Create a new Date object with timezone-adjusted values
-            const tzDate = new Date(
-                parseInt(parts.year),
-                parseInt(parts.month) - 1,
-                parseInt(parts.day),
-                parseInt(parts.hour),
-                parseInt(parts.minute),
-                parseInt(parts.second)
-            );
-            
-            return tzDate;
+            // Simply return the current date - the timezone will be handled by formatting
+            return new Date();
         } catch (e) {
-            console.error('Invalid timezone, using local time:', e);
+            console.error('Error getting current time:', e);
             return new Date();
         }
     }
@@ -123,6 +95,48 @@ class TimeDisplayManager {
         const minutes = date.getMinutes();
         const seconds = date.getSeconds();
         
+        // Apply timezone conversion
+        let tzDate = date;
+        try {
+            // Convert to specified timezone using toLocaleString
+            const options = { 
+                timeZone: this.timezone,
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+                hour12: this.timeFormat === '12h'
+            };
+            const timeStr = date.toLocaleString('en-US', options);
+            
+            // Parse the formatted string back to get hours, minutes, seconds
+            if (this.timeFormat === '12h') {
+                // Format: "09:37:03 AM" or "09:37:03 PM"
+                const parts = timeStr.match(/(\d+):(\d+):(\d+)\s*(AM|PM)?/);
+                if (parts) {
+                    let h = parseInt(parts[1]);
+                    const m = parseInt(parts[2]);
+                    const s = parseInt(parts[3]);
+                    const period = parts[4];
+                    
+                    if (period === 'PM' && h !== 12) h += 12;
+                    if (period === 'AM' && h === 12) h = 0;
+                    
+                    const hour12 = h % 12 || 12;
+                    const ampm = h >= 12 ? '下午' : '上午';
+                    return `${ampm} ${this.padZero(hour12)}:${this.padZero(m)}:${this.padZero(s)}`;
+                }
+            } else {
+                // Format: "09:37:03"
+                const parts = timeStr.match(/(\d+):(\d+):(\d+)/);
+                if (parts) {
+                    return `${this.padZero(parseInt(parts[1]))}:${this.padZero(parseInt(parts[2]))}:${this.padZero(parseInt(parts[3]))}`;
+                }
+            }
+        } catch (e) {
+            console.error('Error formatting time with timezone:', e);
+        }
+        
+        // Fallback to local time
         if (this.timeFormat === '12h') {
             const hour12 = hours % 12 || 12;
             const ampm = hours >= 12 ? '下午' : '上午';
@@ -133,6 +147,44 @@ class TimeDisplayManager {
     }
     
     formatDate(date) {
+        // Apply timezone conversion for date
+        try {
+            const options = {
+                timeZone: this.timezone,
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                weekday: 'long'
+            };
+            const parts = new Intl.DateTimeFormat('zh-CN', options).formatToParts(date);
+            
+            let year, month, day, weekday;
+            parts.forEach(part => {
+                if (part.type === 'year') year = parseInt(part.value);
+                if (part.type === 'month') month = parseInt(part.value);
+                if (part.type === 'day') day = parseInt(part.value);
+                if (part.type === 'weekday') weekday = part.value;
+            });
+            
+            if (year && month && day) {
+                switch (this.dateFormat) {
+                    case 'yyyy-mm-dd':
+                        return `${year}-${this.padZero(month)}-${this.padZero(day)} ${weekday}`;
+                    case 'mm-dd-yyyy':
+                        return `${this.padZero(month)}-${this.padZero(day)}-${year} ${weekday}`;
+                    case 'dd-mm-yyyy':
+                        return `${this.padZero(day)}-${this.padZero(month)}-${year} ${weekday}`;
+                    case 'chinese':
+                        return `${year}年${month}月${day}日 ${weekday}`;
+                    default:
+                        return `${year}-${this.padZero(month)}-${this.padZero(day)} ${weekday}`;
+                }
+            }
+        } catch (e) {
+            console.error('Error formatting date with timezone:', e);
+        }
+        
+        // Fallback to local date
         const year = date.getFullYear();
         const month = date.getMonth() + 1;
         const day = date.getDate();
