@@ -16,7 +16,7 @@ class CollapsibleManager {
                 console.warn('Failed to load collapsed state:', e);
             }
         }
-        return {}; // All sections expanded by default
+        return { default: true }; // All sections collapsed by default
     }
     
     saveCollapsedState() {
@@ -61,6 +61,16 @@ class CollapsibleManager {
             return;
         }
         
+        // Check if this group has only one checkbox (and nothing else significant)
+        const checkboxes = group.querySelectorAll('input[type="checkbox"]');
+        const otherInputs = group.querySelectorAll('input:not([type="checkbox"]), select, textarea, button');
+        const hints = group.querySelectorAll('.settings-hint');
+        
+        // If only one checkbox and no other inputs (ignoring hints), skip collapsible
+        if (checkboxes.length === 1 && otherInputs.length === 0 && hints.length <= 1) {
+            return;
+        }
+        
         // Mark as collapsible
         group.classList.add('collapsible');
         
@@ -99,8 +109,8 @@ class CollapsibleManager {
         group.appendChild(header);
         group.appendChild(content);
         
-        // Restore collapsed state
-        if (this.collapsedState[groupId]) {
+        // Restore collapsed state, default to collapsed if not in saved state
+        if (this.collapsedState[groupId] !== false) {
             group.classList.add('collapsed');
         }
         
