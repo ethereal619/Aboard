@@ -62,13 +62,19 @@ class CollapsibleManager {
         }
         
         // Check if this group has only one checkbox (and nothing else significant)
+        // Cache all queries for better performance
         const checkboxes = group.querySelectorAll('input[type="checkbox"]');
-        const otherInputs = group.querySelectorAll('input:not([type="checkbox"]), select, textarea, button');
-        const hints = group.querySelectorAll('.settings-hint');
+        const checkboxCount = checkboxes.length;
         
-        // If only one checkbox and no other inputs (ignoring hints), skip collapsible
-        if (checkboxes.length === 1 && otherInputs.length === 0 && hints.length <= 1) {
-            return;
+        // Early return optimization: if we have exactly 1 checkbox, check other elements
+        if (checkboxCount === 1) {
+            const otherInputs = group.querySelectorAll('input:not([type="checkbox"]), select, textarea, button');
+            const hints = group.querySelectorAll('.settings-hint');
+            
+            // If only one checkbox and no other inputs (ignoring hints), skip collapsible
+            if (otherInputs.length === 0 && hints.length <= 1) {
+                return;
+            }
         }
         
         // Mark as collapsible
