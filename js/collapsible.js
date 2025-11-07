@@ -71,8 +71,10 @@ class CollapsibleManager {
             const otherInputs = group.querySelectorAll('input:not([type="checkbox"]), select, textarea, button');
             const hints = group.querySelectorAll('.settings-hint');
             
-            // If only one checkbox and no other inputs (ignoring hints), skip collapsible
-            if (otherInputs.length === 0 && hints.length <= 1) {
+            // Skip collapsible for simple single-checkbox settings
+            // We allow up to 1 hint (description text) without making it collapsible
+            const MAX_HINTS_FOR_SIMPLE_SETTING = 1;
+            if (otherInputs.length === 0 && hints.length <= MAX_HINTS_FOR_SIMPLE_SETTING) {
                 return;
             }
         }
@@ -115,7 +117,8 @@ class CollapsibleManager {
         group.appendChild(header);
         group.appendChild(content);
         
-        // Restore collapsed state, default to collapsed if not in saved state
+        // Restore collapsed state: default to collapsed unless explicitly saved as expanded (false)
+        // This ensures new groups start collapsed, and user preferences are preserved
         if (this.collapsedState[groupId] !== false) {
             group.classList.add('collapsed');
         }
