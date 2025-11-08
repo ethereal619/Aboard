@@ -271,8 +271,9 @@ class TimeDisplayManager {
     }
     
     setFullscreenFontSize(size) {
-        this.fullscreenFontSize = size;
-        localStorage.setItem('timeDisplayFullscreenFontSize', size);
+        // Constrain to 10-85% range for safety
+        this.fullscreenFontSize = Math.max(10, Math.min(85, size));
+        localStorage.setItem('timeDisplayFullscreenFontSize', this.fullscreenFontSize);
         if (this.isFullscreen) {
             this.updateFullscreenDisplay();
         }

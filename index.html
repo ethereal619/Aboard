@@ -740,10 +740,10 @@
                         </div>
                         <div class="settings-group" id="time-fullscreen-font-size-settings" style="display: none;">
                             <label>全屏字体大小 <span id="time-fullscreen-font-size-value">15</span>%</label>
-                            <p class="settings-hint">调整全屏时间显示的字体大小，最大可调至90%接近全屏</p>
+                            <p class="settings-hint">调整全屏时间显示的字体大小，范围10%-85%</p>
                             <div style="display: flex; gap: 10px; align-items: center;">
-                                <input type="range" id="time-fullscreen-font-size-slider" min="5" max="90" value="15" class="slider" style="flex: 1;">
-                                <input type="number" id="time-fullscreen-font-size-input" min="5" max="90" value="15" class="size-input">
+                                <input type="range" id="time-fullscreen-font-size-slider" min="10" max="85" value="15" class="slider" style="flex: 1;">
+                                <input type="number" id="time-fullscreen-font-size-input" min="10" max="85" value="15" class="size-input">
                             </div>
                         </div>
                     </div>
@@ -784,11 +784,11 @@
         </div>
     </div>
 
-    <!-- Timer Alert Modal -->
+    <!-- Timer Alert Modal (Warning Level) -->
     <div id="timer-alert-modal" class="modal">
         <div class="modal-content confirm-modal-content">
             <div class="modal-header">
-                <h2>提示</h2>
+                <h2>⚠️ 提示</h2>
             </div>
             <div class="modal-body">
                 <p class="confirm-message" id="timer-alert-message">请设置倒计时时间</p>
@@ -885,8 +885,8 @@
         </button>
         <div id="time-fullscreen-content"></div>
         <div class="time-fullscreen-controls">
-            <div class="time-fullscreen-slider-label">字体大小调节</div>
-            <input type="range" id="time-fullscreen-font-slider" class="time-fullscreen-slider" min="5" max="90" value="15" step="0.5">
+            <div class="time-fullscreen-slider-label">字体大小调节 (10%-85%)</div>
+            <input type="range" id="time-fullscreen-font-slider" class="time-fullscreen-slider" min="10" max="85" value="15" step="0.5">
         </div>
     </div>
 
@@ -953,62 +953,66 @@
                         <label for="timer-sound-checkbox">倒计时结束时播放提示音</label>
                     </div>
                     
-                    <div class="sound-presets">
-                        <button class="sound-preset-btn active" data-sound="class-bell">
-                            开始铃声(10s)
-                            <button class="sound-preview-btn" title="试听">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <polygon points="5 3 19 12 5 21 5 3"></polygon>
-                                </svg>
+                    <div class="sound-settings-content" id="sound-settings-content" style="display: none;">
+                        <div class="sound-presets">
+                            <button class="sound-preset-btn active" data-sound="class-bell" data-url="sounds/class-bell.MP3">
+                                开始铃声(10s)
+                                <button class="sound-preview-btn" title="试听">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                                    </svg>
+                                </button>
                             </button>
-                        </button>
-                        <button class="sound-preset-btn" data-sound="exam-end">
-                            考试结束(4s)
-                            <button class="sound-preview-btn" title="试听">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <polygon points="5 3 19 12 5 21 5 3"></polygon>
-                                </svg>
+                            <button class="sound-preset-btn" data-sound="exam-end" data-url="sounds/exam-end.MP3">
+                                考试结束(4s)
+                                <button class="sound-preview-btn" title="试听">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                                    </svg>
+                                </button>
                             </button>
-                        </button>
-                        <button class="sound-preset-btn" data-sound="gentle-alarm">
-                            柔和(17s)
-                            <button class="sound-preview-btn" title="试听">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <polygon points="5 3 19 12 5 21 5 3"></polygon>
-                                </svg>
+                            <button class="sound-preset-btn" data-sound="gentle-alarm" data-url="sounds/gentle-alarm.MP3">
+                                柔和(17s)
+                                <button class="sound-preview-btn" title="试听">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                                    </svg>
+                                </button>
                             </button>
-                        </button>
-                        <button class="sound-preset-btn" data-sound="digital-beep">
-                            结束铃声(4s)
-                            <button class="sound-preview-btn" title="试听">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <polygon points="5 3 19 12 5 21 5 3"></polygon>
-                                </svg>
+                            <button class="sound-preset-btn" data-sound="digital-beep" data-url="sounds/digital-beep.MP3">
+                                结束铃声(4s)
+                                <button class="sound-preview-btn" title="试听">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                                    </svg>
+                                </button>
                             </button>
-                        </button>
-                    </div>
-                    
-                    <div class="sound-loop-settings">
-                        <div class="sound-checkbox">
-                            <input type="checkbox" id="timer-loop-checkbox">
-                            <label for="timer-loop-checkbox">循环播放</label>
                         </div>
-                        <div class="sound-loop-count" id="sound-loop-count-group" style="display: none;">
-                            <label for="timer-loop-count">循环次数</label>
-                            <input type="number" id="timer-loop-count" min="1" max="100" value="3" class="loop-count-input">
+                        
+                        <div class="sound-loop-settings">
+                            <div class="sound-checkbox">
+                                <input type="checkbox" id="timer-loop-checkbox">
+                                <label for="timer-loop-checkbox">循环播放</label>
+                            </div>
+                            <div class="sound-loop-count" id="sound-loop-count-group" style="display: none;">
+                                <label for="timer-loop-count">循环次数</label>
+                                <input type="number" id="timer-loop-count" min="1" max="100" value="3" class="loop-count-input">
+                            </div>
                         </div>
-                    </div>
-                    
-                    <div class="sound-upload-group">
-                        <label for="timer-sound-upload" class="sound-upload-btn">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                                <polyline points="17 8 12 3 7 8"></polyline>
-                                <line x1="12" y1="3" x2="12" y2="15"></line>
-                            </svg>
-                            上传自定义音频
-                        </label>
-                        <input type="file" id="timer-sound-upload" accept="audio/*" style="display: none;">
+                        
+                        <div class="sound-upload-group">
+                            <label for="timer-sound-upload" class="sound-upload-btn">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                    <polyline points="17 8 12 3 7 8"></polyline>
+                                    <line x1="12" y1="3" x2="12" y2="15"></line>
+                                </svg>
+                                上传自定义音频
+                            </label>
+                            <input type="file" id="timer-sound-upload" accept="audio/*" multiple style="display: none;">
+                        </div>
+                        
+                        <div id="custom-sounds-list" class="sound-presets" style="margin-top: 10px;"></div>
                     </div>
                 </div>
                 
