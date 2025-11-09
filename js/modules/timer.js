@@ -44,14 +44,12 @@ class TimerInstance {
         this.isDragging = false;
         this.dragOffset = { x: 0, y: 0 };
         
-        // Auto-hide timer
-        this.inactivityTimer = null;
-        this.isCompact = false;
+        // Minimal display mode (replaces auto-hide)
+        this.isMinimal = false;
         
         this.createDisplayElement();
         this.startTimerLoop();
         this.setupFullscreenChangeListener();
-        this.resetInactivityTimer();
     }
     
     setupFullscreenChangeListener() {
@@ -74,28 +72,7 @@ class TimerInstance {
         document.addEventListener('mozfullscreenchange', handleFullscreenChange);
         document.addEventListener('MSFullscreenChange', handleFullscreenChange);
     }
-    
-    resetInactivityTimer() {
-        // Clear existing timer
-        if (this.inactivityTimer) {
-            clearTimeout(this.inactivityTimer);
-        }
-        
-        // Exit compact mode
-        if (this.isCompact) {
-            this.isCompact = false;
-            this.displayElement.classList.remove('compact');
-        }
-        
-        // Set new timer for 4 seconds
-        this.inactivityTimer = setTimeout(() => {
-            if (!this.isDragging && !this.isFullscreen) {
-                this.isCompact = true;
-                this.displayElement.classList.add('compact');
-            }
-        }, 4000);
-    }
-    
+
     createDisplayElement() {
         const display = document.createElement('div');
         display.className = 'timer-display-widget';
@@ -131,6 +108,14 @@ class TimerInstance {
                 </button>
             </div>
             <div class="timer-display-actions">
+                <button class="timer-action-btn timer-minimal-btn" title="最简显示 (双击恢复)">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                        <line x1="9" y1="9" x2="15" y2="15"></line>
+                        <line x1="15" y1="9" x2="9" y2="15"></line>
+                    </svg>
+                    最简
+                </button>
                 <button class="timer-action-btn timer-adjust-btn" title="调整">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <circle cx="12" cy="12" r="3"></circle>
@@ -174,37 +159,39 @@ class TimerInstance {
         const playPauseBtn = this.displayElement.querySelector('.timer-play-pause-btn');
         const resetBtn = this.displayElement.querySelector('.timer-reset-btn');
         const closeBtn = this.displayElement.querySelector('.timer-close-btn');
+        const minimalBtn = this.displayElement.querySelector('.timer-minimal-btn');
         const adjustBtn = this.displayElement.querySelector('.timer-adjust-btn');
         const fullscreenBtn = this.displayElement.querySelector('.timer-fullscreen-btn');
         const fontSizeSlider = this.displayElement.querySelector('.timer-font-size-slider');
+        const timeDisplay = this.displayElement.querySelector('.timer-display-time');
         
         playPauseBtn.addEventListener('click', () => {
             this.togglePlayPause();
-            this.resetInactivityTimer();
         });
         resetBtn.addEventListener('click', () => {
             this.resetTimer();
-            this.resetInactivityTimer();
         });
         closeBtn.addEventListener('click', () => {
             this.closeTimer();
         });
+        minimalBtn.addEventListener('click', () => {
+            this.toggleMinimal();
+        });
         adjustBtn.addEventListener('click', () => {
             this.adjustTimer();
-            this.resetInactivityTimer();
         });
         fullscreenBtn.addEventListener('click', () => {
             this.toggleFullscreen();
-            this.resetInactivityTimer();
         });
         fontSizeSlider.addEventListener('input', (e) => {
             this.updateFontSize(e.target.value);
-            this.resetInactivityTimer();
         });
         
-        // Reset inactivity timer on any interaction with the widget
-        this.displayElement.addEventListener('click', () => {
-            this.resetInactivityTimer();
+        // Double-click on time display to restore from minimal mode
+        timeDisplay.addEventListener('dblclick', () => {
+            if (this.isMinimal) {
+                this.toggleMinimal();
+            }
         });
     }
     
@@ -218,7 +205,6 @@ class TimerInstance {
             
             this.isDragging = true;
             this.displayElement.classList.add('dragging');
-            this.resetInactivityTimer();
             
             const rect = this.displayElement.getBoundingClientRect();
             this.dragOffset.x = e.clientX - rect.left;
@@ -276,7 +262,6 @@ class TimerInstance {
             if (this.isDragging) {
                 this.isDragging = false;
                 this.displayElement.classList.remove('dragging');
-                this.resetInactivityTimer();
                 document.removeEventListener('mousemove', handleMouseMove);
                 document.removeEventListener('mouseup', handleMouseUp);
             }
@@ -486,6 +471,15 @@ class TimerInstance {
         this.manager.showSettingsModalForTimer(this);
     }
     
+    toggleMinimal() {
+        this.isMinimal = !this.isMinimal;
+        if (this.isMinimal) {
+            this.displayElement.classList.add('minimal');
+        } else {
+            this.displayElement.classList.remove('minimal');
+        }
+    }
+    
     toggleFullscreen() {
         if (this.isFullscreen) {
             this.exitFullscreen();
@@ -497,10 +491,12 @@ class TimerInstance {
     enterFullscreen() {
         this.isFullscreen = true;
         
-        // Apply fullscreen font size based on saved percentage
+        // Apply fullscreen font size based on saved percentage (10-85%)
+        // Constrain the value to be within the safe range
+        const constrainedPercent = Math.max(10, Math.min(85, this.fullscreenFontSizePercent));
         const timeDisplay = this.displayElement.querySelector('.timer-display-time');
         if (timeDisplay) {
-            timeDisplay.style.fontSize = `${this.fullscreenFontSizePercent}vmin`;
+            timeDisplay.style.fontSize = `${constrainedPercent}vmin`;
         }
         
         // Use browser's fullscreen API for true fullscreen
@@ -570,12 +566,6 @@ class TimerInstance {
             this.intervalId = null;
         }
         
-        // Clear inactivity timer
-        if (this.inactivityTimer) {
-            clearTimeout(this.inactivityTimer);
-            this.inactivityTimer = null;
-        }
-        
         // Stop any playing audio
         if (this.currentAudio) {
             this.currentAudio.pause();
@@ -629,6 +619,9 @@ class TimerManager {
         this.preloadedAudio = {};
         this.preloadSounds();
         
+        // Load custom sounds from localStorage
+        this.customSounds = this.loadCustomSounds();
+        
         // Current timer being adjusted (for adjust functionality)
         this.adjustingTimer = null;
         
@@ -637,6 +630,7 @@ class TimerManager {
         this.currentPreviewButton = null;
         
         this.setupEventListeners();
+        this.renderCustomSounds();
     }
     
     preloadSounds() {
@@ -646,6 +640,111 @@ class TimerManager {
             audio.preload = 'auto';
             audio.load();
             this.preloadedAudio[key] = audio;
+        });
+    }
+    
+    loadCustomSounds() {
+        // Load custom sounds from localStorage
+        try {
+            const saved = localStorage.getItem('timerCustomSounds');
+            if (saved) {
+                return JSON.parse(saved);
+            }
+        } catch (e) {
+            console.warn('Failed to load custom sounds:', e);
+        }
+        return [];
+    }
+    
+    saveCustomSounds() {
+        // Save custom sounds to localStorage
+        try {
+            localStorage.setItem('timerCustomSounds', JSON.stringify(this.customSounds));
+        } catch (e) {
+            console.warn('Failed to save custom sounds:', e);
+        }
+    }
+    
+    addCustomSound(file) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const dataUrl = e.target.result;
+            const customSound = {
+                id: 'custom-' + Date.now(),
+                name: file.name,
+                url: dataUrl
+            };
+            
+            this.customSounds.push(customSound);
+            this.saveCustomSounds();
+            this.renderCustomSounds();
+        };
+        reader.readAsDataURL(file);
+    }
+    
+    removeCustomSound(id) {
+        this.customSounds = this.customSounds.filter(s => s.id !== id);
+        this.saveCustomSounds();
+        this.renderCustomSounds();
+    }
+    
+    renderCustomSounds() {
+        const container = document.getElementById('custom-sounds-list');
+        if (!container) return;
+        
+        container.innerHTML = '';
+        
+        this.customSounds.forEach(sound => {
+            const btn = document.createElement('button');
+            btn.className = 'sound-preset-btn';
+            btn.dataset.sound = sound.id;
+            btn.dataset.url = sound.url;
+            
+            // Truncate filename if too long
+            const displayName = sound.name.length > 25 ? sound.name.substring(0, 22) + '...' : sound.name;
+            
+            btn.innerHTML = `
+                ${displayName}
+                <div style="display: flex; gap: 4px;">
+                    <button class="sound-preview-btn" title="试听">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                        </svg>
+                    </button>
+                    <button class="sound-delete-btn" title="删除">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="18" y1="6" x2="6" y2="18"></line>
+                            <line x1="6" y1="6" x2="18" y2="18"></line>
+                        </svg>
+                    </button>
+                </div>
+            `;
+            
+            // Add click handler for selecting
+            btn.addEventListener('click', (e) => {
+                if (e.target.closest('.sound-preview-btn') || e.target.closest('.sound-delete-btn')) {
+                    return;
+                }
+                
+                document.querySelectorAll('.sound-preset-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+            });
+            
+            // Add preview button handler
+            const previewBtn = btn.querySelector('.sound-preview-btn');
+            previewBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.previewSoundByUrl(sound.url, e.currentTarget);
+            });
+            
+            // Add delete button handler
+            const deleteBtn = btn.querySelector('.sound-delete-btn');
+            deleteBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.removeCustomSound(sound.id);
+            });
+            
+            container.appendChild(btn);
         });
     }
     
@@ -663,9 +762,14 @@ class TimerManager {
         
         // Sound checkbox - handle enabling/disabling sound options
         const soundCheckbox = document.getElementById('timer-sound-checkbox');
-        if (soundCheckbox) {
+        const soundSettingsContent = document.getElementById('sound-settings-content');
+        if (soundCheckbox && soundSettingsContent) {
             soundCheckbox.addEventListener('change', (e) => {
-                this.updateSoundOptionsState(e.target.checked);
+                if (e.target.checked) {
+                    soundSettingsContent.style.display = 'block';
+                } else {
+                    soundSettingsContent.style.display = 'none';
+                }
             });
         }
         
@@ -690,35 +794,30 @@ class TimerManager {
             btn.addEventListener('click', (e) => {
                 e.stopPropagation();
                 const presetBtn = e.currentTarget.closest('.sound-preset-btn');
-                if (presetBtn && presetBtn.dataset.sound) {
-                    this.previewSound(presetBtn.dataset.sound, e.currentTarget);
+                if (presetBtn) {
+                    const soundUrl = presetBtn.dataset.url;
+                    const soundKey = presetBtn.dataset.sound;
+                    if (soundUrl) {
+                        this.previewSoundByUrl(soundUrl, e.currentTarget);
+                    } else if (soundKey && this.sounds[soundKey]) {
+                        this.previewSound(soundKey, e.currentTarget);
+                    }
                 }
             });
         });
         
-        // Sound upload
+        // Sound upload - support multiple files
         const soundUploadInput = document.getElementById('timer-sound-upload');
         if (soundUploadInput) {
             soundUploadInput.addEventListener('change', (e) => {
-                const file = e.target.files[0];
-                if (file && file.type.startsWith('audio/')) {
-                    const url = URL.createObjectURL(file);
-                    const fileName = file.name;
-                    
-                    // Store custom sound URL
-                    soundUploadInput.dataset.customSoundUrl = url;
-                    soundUploadInput.dataset.customSoundName = fileName;
-                    
-                    // Add custom sound button to presets
-                    this.addCustomSoundButton(fileName, url);
-                    
-                    // Select the custom sound
-                    document.querySelectorAll('.sound-preset-btn').forEach(b => b.classList.remove('active'));
-                    const customBtn = document.querySelector('.sound-preset-btn[data-sound="custom"]');
-                    if (customBtn) {
-                        customBtn.classList.add('active');
+                const files = Array.from(e.target.files);
+                files.forEach(file => {
+                    if (file && file.type.startsWith('audio/')) {
+                        this.addCustomSound(file);
                     }
-                }
+                });
+                // Clear input so same file can be uploaded again if needed
+                e.target.value = '';
             });
         }
         
@@ -794,6 +893,16 @@ class TimerManager {
                 soundGroup.style.display = 'none';
                 // Stop any playing preview when switching to stopwatch mode
                 this.stopPreviewAudio();
+                // Also hide sound settings content when switching modes
+                const soundSettingsContent = document.getElementById('sound-settings-content');
+                if (soundSettingsContent) {
+                    soundSettingsContent.style.display = 'none';
+                }
+                // Uncheck the sound checkbox
+                const soundCheckbox = document.getElementById('timer-sound-checkbox');
+                if (soundCheckbox) {
+                    soundCheckbox.checked = false;
+                }
             }
         }
     }
@@ -831,9 +940,15 @@ class TimerManager {
             
             // Reset sound settings
             document.getElementById('timer-sound-checkbox').checked = false;
-            this.updateSoundOptionsState(false); // Disable sound options initially
+            const soundSettingsContent = document.getElementById('sound-settings-content');
+            if (soundSettingsContent) {
+                soundSettingsContent.style.display = 'none';
+            }
             document.querySelectorAll('.sound-preset-btn').forEach(b => b.classList.remove('active'));
-            document.querySelector('.sound-preset-btn[data-sound="class-bell"]').classList.add('active');
+            const firstPreset = document.querySelector('.sound-preset-btn[data-sound="class-bell"]');
+            if (firstPreset) {
+                firstPreset.classList.add('active');
+            }
             
             // Reset loop settings
             const loopCheckbox = document.getElementById('timer-loop-checkbox');
@@ -845,12 +960,6 @@ class TimerManager {
                 loopCountGroup.style.display = 'none';
             }
             document.getElementById('timer-loop-count').value = '3';
-            
-            const soundUploadInput = document.getElementById('timer-sound-upload');
-            if (soundUploadInput) {
-                soundUploadInput.value = '';
-                delete soundUploadInput.dataset.customSoundUrl;
-            }
         }
     }
     
@@ -880,7 +989,10 @@ class TimerManager {
             
             // Set sound settings
             document.getElementById('timer-sound-checkbox').checked = timer.playSound;
-            this.updateSoundOptionsState(timer.playSound); // Enable/disable based on timer settings
+            const soundSettingsContent = document.getElementById('sound-settings-content');
+            if (soundSettingsContent) {
+                soundSettingsContent.style.display = timer.playSound ? 'block' : 'none';
+            }
             
             // Set loop settings
             const loopCheckbox = document.getElementById('timer-loop-checkbox');
@@ -934,8 +1046,8 @@ class TimerManager {
         
         // Get custom sound URL if custom sound is selected
         let customSoundUrl = null;
-        if (selectedSound === 'custom' && activeSoundBtn) {
-            customSoundUrl = activeSoundBtn.dataset.customUrl;
+        if (activeSoundBtn && activeSoundBtn.dataset.url) {
+            customSoundUrl = activeSoundBtn.dataset.url;
         }
         
         // Get loop settings
@@ -1026,7 +1138,7 @@ class TimerManager {
         }
     }
     
-    previewCustomSound(soundUrl, previewButton) {
+    previewSoundByUrl(soundUrl, previewButton) {
         // If same button clicked and audio is playing, pause it
         if (this.currentPreviewButton === previewButton && this.previewAudio && !this.previewAudio.paused) {
             this.stopPreviewAudio();
@@ -1059,84 +1171,5 @@ class TimerManager {
                 this.stopPreviewAudio();
             });
         }
-    }
-    
-    updateSoundOptionsState(enabled) {
-        const soundPresets = document.querySelector('.sound-presets');
-        const soundLoopSettings = document.querySelector('.sound-loop-settings');
-        const soundUploadGroup = document.querySelector('.sound-upload-group');
-        
-        if (enabled) {
-            // Enable sound options
-            if (soundPresets) soundPresets.style.pointerEvents = 'auto';
-            if (soundLoopSettings) soundLoopSettings.style.pointerEvents = 'auto';
-            if (soundUploadGroup) soundUploadGroup.style.pointerEvents = 'auto';
-            
-            if (soundPresets) soundPresets.style.opacity = '1';
-            if (soundLoopSettings) soundLoopSettings.style.opacity = '1';
-            if (soundUploadGroup) soundUploadGroup.style.opacity = '1';
-        } else {
-            // Disable sound options
-            if (soundPresets) soundPresets.style.pointerEvents = 'none';
-            if (soundLoopSettings) soundLoopSettings.style.pointerEvents = 'none';
-            if (soundUploadGroup) soundUploadGroup.style.pointerEvents = 'none';
-            
-            if (soundPresets) soundPresets.style.opacity = '0.5';
-            if (soundLoopSettings) soundLoopSettings.style.opacity = '0.5';
-            if (soundUploadGroup) soundUploadGroup.style.opacity = '0.5';
-            
-            // Stop any playing preview
-            this.stopPreviewAudio();
-        }
-    }
-    
-    addCustomSoundButton(fileName, soundUrl) {
-        const soundPresets = document.querySelector('.sound-presets');
-        if (!soundPresets) return;
-        
-        // Remove existing custom sound button if any
-        const existingCustomBtn = soundPresets.querySelector('.sound-preset-btn[data-sound="custom"]');
-        if (existingCustomBtn) {
-            existingCustomBtn.remove();
-        }
-        
-        // Create new custom sound button
-        const customBtn = document.createElement('button');
-        customBtn.className = 'sound-preset-btn';
-        customBtn.dataset.sound = 'custom';
-        customBtn.dataset.customUrl = soundUrl;
-        
-        // Truncate filename if too long
-        const displayName = fileName.length > 20 ? fileName.substring(0, 17) + '...' : fileName;
-        
-        customBtn.innerHTML = `
-            ${displayName}
-            <button class="sound-preview-btn" title="试听">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <polygon points="5 3 19 12 5 21 5 3"></polygon>
-                </svg>
-            </button>
-        `;
-        
-        // Add click handler for selecting
-        customBtn.addEventListener('click', (e) => {
-            if (e.target.classList.contains('sound-preview-btn') || 
-                e.target.closest('.sound-preview-btn')) {
-                return; // Let the preview button handle it
-            }
-            
-            document.querySelectorAll('.sound-preset-btn').forEach(b => b.classList.remove('active'));
-            customBtn.classList.add('active');
-        });
-        
-        // Add preview button handler
-        const previewBtn = customBtn.querySelector('.sound-preview-btn');
-        previewBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            this.previewCustomSound(soundUrl, e.currentTarget);
-        });
-        
-        // Insert before upload button group
-        soundPresets.appendChild(customBtn);
     }
 }

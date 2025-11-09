@@ -242,6 +242,27 @@
     height: 16px;
 }
 
+.sound-delete-btn {
+    padding: 6px;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    color: #ff3b30;
+}
+
+.sound-delete-btn:hover {
+    transform: scale(1.1);
+}
+
+.sound-delete-btn svg {
+    width: 16px;
+    height: 16px;
+}
+
 .sound-upload-group {
     display: flex;
     gap: 10px;
@@ -374,20 +395,21 @@
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
 }
 
-/* Auto-hide controls when inactive */
-.timer-display-widget.compact .timer-display-header,
-.timer-display-widget.compact .timer-display-controls,
-.timer-display-widget.compact .timer-display-actions,
-.timer-display-widget.compact .timer-font-size-control {
+/* Auto-hide controls when inactive - replaced with minimal mode */
+.timer-display-widget.minimal .timer-display-header,
+.timer-display-widget.minimal .timer-display-controls,
+.timer-display-widget.minimal .timer-display-actions,
+.timer-display-widget.minimal .timer-font-size-control {
     display: none;
 }
 
-.timer-display-widget.compact {
+.timer-display-widget.minimal {
     padding: 12px 16px;
     min-width: auto;
+    cursor: pointer;
 }
 
-.timer-display-widget.compact .timer-display-time {
+.timer-display-widget.minimal .timer-display-time {
     margin: 0;
 }
 
