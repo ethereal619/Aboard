@@ -1935,7 +1935,8 @@ class DrawingBoard {
         nextOrAddBtn.disabled = false;
         
         // Update button icon and title based on whether we're on the last page
-        if (this.currentPage >= this.pages.length) {
+        // Also show "+" icon when there's only one page total
+        if (this.currentPage >= this.pages.length || this.pages.length === 1) {
             // Show add icon
             nextOrAddBtn.innerHTML = `
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
