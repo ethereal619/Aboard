@@ -149,7 +149,6 @@ body {
 /* Configuration area */
 #config-area {
     position: fixed;
-    bottom: 100px;
     left: 50%;
     transform: translateX(-50%);
     z-index: 999;
@@ -697,6 +696,62 @@ body {
     display: flex;
     flex-direction: column;
     gap: 12px;
+}
+
+.settings-group.collapsible {
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 8px;
+    background: #fafafa;
+}
+
+/* Increase padding for settings groups with sliders */
+.settings-group.collapsible:has(.slider) {
+    padding: 12px;
+    min-height: 60px;
+}
+
+.settings-group-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    user-select: none;
+}
+
+.collapse-toggle {
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #666;
+    transition: transform 0.2s ease;
+    flex-shrink: 0;
+}
+
+.collapse-toggle svg {
+    width: 12px;
+    height: 12px;
+}
+
+.settings-group.collapsed .collapse-toggle {
+    transform: rotate(-90deg);
+}
+
+.settings-group-content {
+    margin-top: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    transition: max-height 0.3s ease, opacity 0.3s ease;
+    overflow: hidden;
+}
+
+.settings-group.collapsed .settings-group-content {
+    max-height: 0 !important;
+    opacity: 0;
+    margin-top: 0;
 }
 
 .settings-group label {
@@ -2038,30 +2093,6 @@ body {
     gap: 12px;
 }
 
-/* Time Display Styles */
-#time-display {
-    position: fixed;
-    top: 140px;  /* Below pagination controls with appropriate gap (80px top + 36px height + 24px gap) */
-    right: 20px;
-    padding: 12px 20px;
-    background: rgba(255, 255, 255, 0.95);
-    border-radius: 8px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    z-index: 900;
-    pointer-events: none;
-    user-select: none;
-}
-
-#time-display.show {
-    display: block !important;
-}
-
-.time-line {
-    line-height: 1.5;
-    white-space: nowrap;
-}
-
 /* Format Select Styles */
 .format-select {
     width: 100%;
@@ -2101,71 +2132,4 @@ body {
 
 .size-input:focus {
     border-color: var(--theme-color, #007AFF);
-}
-
-
-/* Fullscreen Time Display Modal */
-.time-fullscreen-modal {
-    display: none;
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    background-color: rgba(0, 0, 0, 0.95);
-    z-index: 10000;
-    justify-content: center;
-    align-items: center;
-}
-
-.time-fullscreen-modal.show {
-    display: flex;
-}
-
-.time-fullscreen-close-btn {
-    position: absolute;
-    top: 20px;
-    right: 20px;
-    width: 56px;
-    height: 56px;
-    border: none;
-    border-radius: 50%;
-    background-color: rgba(255, 255, 255, 0.1);
-    color: white;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.3s ease;
-    z-index: 10001;
-}
-
-.time-fullscreen-close-btn:hover {
-    background-color: rgba(255, 255, 255, 0.2);
-    transform: scale(1.1);
-}
-
-.time-fullscreen-close-btn:active {
-    transform: scale(0.95);
-}
-
-#time-fullscreen-content {
-    text-align: center;
-    color: white;
-}
-
-#time-fullscreen-content .time-line {
-    line-height: 1.3;
-    margin: 10px 0;
-}
-
-/* Time Display with Background */
-#time-display {
-    cursor: pointer;
-    pointer-events: auto;
-    transition: transform 0.2s ease;
-}
-
-#time-display:hover {
-    transform: scale(1.05);
 }

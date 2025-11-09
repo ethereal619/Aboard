@@ -6,6 +6,10 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <title>Aboard - 简约白板</title>
     <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/modules/time-display.css">
+    <link rel="stylesheet" href="css/modules/feature-area.css">
+    <link rel="stylesheet" href="css/modules/export.css">
+    <link rel="stylesheet" href="css/modules/timer.css">
 </head>
 <body>
     <!-- Zoom controls in top right corner -->
@@ -34,7 +38,7 @@
             </svg>
         </button>
         <button id="fullscreen-btn" class="history-btn" title="全屏 (F11)">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path>
             </svg>
         </button>
@@ -187,20 +191,67 @@
             </div>
         </div>
 
-        <!-- More configuration (Time Display) -->
+        <!-- More configuration -->
         <div id="more-config" class="config-panel">
             <div class="config-group">
-                <label>时间显示</label>
-                <label class="checkbox-label">
-                    <input type="checkbox" id="show-date-checkbox-more">
-                    <span>显示日期</span>
-                </label>
-                <label class="checkbox-label" style="margin-top: 8px;">
-                    <input type="checkbox" id="show-time-checkbox-more">
-                    <span>显示时间</span>
-                </label>
+                <label>更多功能</label>
+                <p class="settings-hint" style="font-size: 12px; color: #666; margin-top: -4px;">其他工具和配置项</p>
             </div>
         </div>
+    </div>
+
+    <!-- Time Display Area (independent, draggable, with edge snapping) -->
+    <div id="time-display-area">
+        <!-- Close button for time display area -->
+        <button id="time-display-area-close-btn" class="config-close-btn" title="关闭">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+        </button>
+        
+        <div class="config-group">
+            <label>时间显示选项</label>
+            <label class="checkbox-label">
+                <input type="checkbox" id="show-date-checkbox-area">
+                <span>显示日期</span>
+            </label>
+            <label class="checkbox-label" style="margin-top: 8px;">
+                <input type="checkbox" id="show-time-checkbox-area">
+                <span>显示时间</span>
+            </label>
+        </div>
+    </div>
+
+    <!-- Feature buttons area (independent, draggable, with edge snapping) -->
+    <div id="feature-area" class="feature-area">
+        <!-- Close button for feature panel -->
+        <button id="feature-close-btn" class="config-close-btn" title="关闭">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+        </button>
+        
+        <div class="config-group">
+            <label>小功能</label>
+            <div class="more-features-grid">
+                <button id="time-display-feature-btn" class="feature-btn" title="时间显示">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <polyline points="12 6 12 12 16 14"></polyline>
+                    </svg>
+                    <span>时间</span>
+                </button>
+                <button id="timer-feature-btn" class="feature-btn" title="计时器">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="13" r="8"></circle>
+                        <path d="M12 9v4l2 2"></path>
+                        <path d="M9 2h6"></path>
+                        <path d="M12 2v2"></path>
+                    </svg>
+                    <span>计时</span>
+                </button>
             </div>
         </div>
     </div>
@@ -538,7 +589,7 @@
                             
                             <div class="about-section">
                                 <h4>版本</h4>
-                                <p>v2.0.0</p>
+                                <p>v2.1.0</p>
                             </div>
                         </div>
                     </div>
@@ -679,18 +730,20 @@
                             </div>
                         </div>
                         <div class="settings-group" id="time-fullscreen-settings" style="display: none;">
-                            <label class="checkbox-label">
-                                <input type="checkbox" id="time-fullscreen-enabled-checkbox" checked>
-                                <span>启用双击全屏</span>
-                            </label>
-                            <p class="settings-hint">双击时间窗口可全屏显示时间</p>
+                            <label>全屏模式</label>
+                            <p class="settings-hint">选择如何触发时间全屏显示</p>
+                            <div class="button-size-options" style="grid-template-columns: 1fr 1fr 1fr;">
+                                <button class="fullscreen-mode-btn" data-mode="disabled">关闭</button>
+                                <button class="fullscreen-mode-btn" data-mode="single">单击</button>
+                                <button class="fullscreen-mode-btn active" data-mode="double">双击</button>
+                            </div>
                         </div>
                         <div class="settings-group" id="time-fullscreen-font-size-settings" style="display: none;">
                             <label>全屏字体大小 <span id="time-fullscreen-font-size-value">15</span>%</label>
-                            <p class="settings-hint">调整全屏时间显示的字体大小</p>
+                            <p class="settings-hint">调整全屏时间显示的字体大小，范围10%-85%</p>
                             <div style="display: flex; gap: 10px; align-items: center;">
-                                <input type="range" id="time-fullscreen-font-size-slider" min="8" max="25" value="15" class="slider" style="flex: 1;">
-                                <input type="number" id="time-fullscreen-font-size-input" min="8" max="25" value="15" class="size-input">
+                                <input type="range" id="time-fullscreen-font-size-slider" min="10" max="85" value="15" class="slider" style="flex: 1;">
+                                <input type="number" id="time-fullscreen-font-size-input" min="10" max="85" value="15" class="size-input">
                             </div>
                         </div>
                     </div>
@@ -726,6 +779,21 @@
                 <div class="announcement-buttons">
                     <button id="announcement-ok-btn" class="announcement-btn ok-btn">确定</button>
                     <button id="announcement-no-show-btn" class="announcement-btn no-show-btn">不再弹出</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Timer Alert Modal (Warning Level) -->
+    <div id="timer-alert-modal" class="modal">
+        <div class="modal-content confirm-modal-content">
+            <div class="modal-header">
+                <h2>⚠️ 提示</h2>
+            </div>
+            <div class="modal-body">
+                <p class="confirm-message" id="timer-alert-message">请设置倒计时时间</p>
+                <div class="confirm-buttons">
+                    <button id="timer-alert-ok-btn" class="confirm-btn ok-btn">确定</button>
                 </div>
             </div>
         </div>
@@ -816,6 +884,178 @@
             </svg>
         </button>
         <div id="time-fullscreen-content"></div>
+        <div class="time-fullscreen-controls">
+            <div class="time-fullscreen-slider-label">字体大小调节 (10%-85%)</div>
+            <input type="range" id="time-fullscreen-font-slider" class="time-fullscreen-slider" min="10" max="85" value="15" step="0.5">
+        </div>
+    </div>
+
+    <!-- Fullscreen Timer Display Modal -->
+    <div id="timer-fullscreen-modal" class="timer-fullscreen-modal">
+        <button id="timer-fullscreen-close-btn" class="timer-fullscreen-close-btn" title="关闭全屏">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+        </button>
+        <div id="timer-fullscreen-content"></div>
+        <div class="timer-fullscreen-controls">
+            <div class="timer-fullscreen-slider-label">字体大小调节 (10%-85%)</div>
+            <input type="range" id="timer-fullscreen-font-slider" class="timer-fullscreen-slider" min="10" max="85" value="15" step="0.5">
+        </div>
+    </div>
+
+    <!-- Timer Settings Modal -->
+    <div id="timer-settings-modal">
+        <div class="timer-modal-content">
+            <div class="timer-modal-header">
+                <h2>计时器设置</h2>
+                <button id="timer-settings-close-btn" class="modal-close-btn" title="关闭">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+            <div class="timer-modal-body">
+                <!-- Timer Mode Selection -->
+                <div class="timer-mode-group">
+                    <label>选择模式</label>
+                    <div class="timer-mode-buttons">
+                        <button class="timer-mode-btn active" data-mode="stopwatch">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="12" cy="13" r="8"></circle>
+                                <path d="M12 9v4l2 2"></path>
+                                <path d="M9 2h6"></path>
+                            </svg>
+                            正计时
+                        </button>
+                        <button class="timer-mode-btn" data-mode="countdown">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="12" cy="13" r="8"></circle>
+                                <path d="M12 9v4l2 2"></path>
+                                <path d="M9 2h6"></path>
+                                <path d="M16 6l-4 4"></path>
+                            </svg>
+                            倒计时
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Timer Title Input -->
+                <div class="timer-input-group">
+                    <label for="timer-title-input">计时器标题（可选）</label>
+                    <input type="text" id="timer-title-input" class="timer-title-input" placeholder="例如：课堂演讲、考试时间等" maxlength="50">
+                </div>
+                
+                <!-- Time Input -->
+                <div class="timer-input-group">
+                    <label id="timer-time-label">设置时间</label>
+                    <div class="time-inputs">
+                        <div class="time-input-field">
+                            <label>小时</label>
+                            <input type="number" id="timer-hours" min="0" max="23" value="0">
+                        </div>
+                        <div class="time-input-field">
+                            <label>分钟</label>
+                            <input type="number" id="timer-minutes" min="0" max="59" value="0">
+                        </div>
+                        <div class="time-input-field">
+                            <label>秒</label>
+                            <input type="number" id="timer-seconds" min="0" max="59" value="0">
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Sound Settings (only for countdown) -->
+                <div class="timer-sound-group disabled">
+                    <div class="sound-checkbox">
+                        <input type="checkbox" id="timer-sound-checkbox">
+                        <label for="timer-sound-checkbox">倒计时结束时播放提示音</label>
+                    </div>
+                    
+                    <div class="sound-settings-content" id="sound-settings-content" style="display: none;">
+                        <div class="sound-presets sound-presets-grid">
+                            <button class="sound-preset-btn active" data-sound="class-bell" data-url="sounds/class-bell.MP3">
+                                开始铃声(10s)
+                            </button>
+                            <button class="sound-preset-btn" data-sound="exam-end" data-url="sounds/exam-end.MP3">
+                                考试结束(4s)
+                            </button>
+                            <button class="sound-preset-btn" data-sound="gentle-alarm" data-url="sounds/gentle-alarm.MP3">
+                                柔和(17s)
+                            </button>
+                            <button class="sound-preset-btn" data-sound="digital-beep" data-url="sounds/digital-beep.MP3">
+                                结束铃声(4s)
+                            </button>
+                        </div>
+                        
+                        <div class="sound-loop-settings">
+                            <div class="sound-checkbox">
+                                <input type="checkbox" id="timer-loop-checkbox">
+                                <label for="timer-loop-checkbox">循环播放</label>
+                            </div>
+                            <div class="sound-loop-count" id="sound-loop-count-group" style="display: none;">
+                                <label for="timer-loop-count">循环次数</label>
+                                <input type="number" id="timer-loop-count" min="1" max="100" value="3" class="loop-count-input">
+                            </div>
+                        </div>
+                        
+                        <div class="sound-upload-group">
+                            <label for="timer-sound-upload" class="sound-upload-btn">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                    <polyline points="17 8 12 3 7 8"></polyline>
+                                    <line x1="12" y1="3" x2="12" y2="15"></line>
+                                </svg>
+                                上传自定义音频
+                            </label>
+                            <input type="file" id="timer-sound-upload" accept="audio/*" multiple style="display: none;">
+                        </div>
+                        
+                        <div id="custom-sounds-list" class="sound-presets" style="margin-top: 10px;"></div>
+                    </div>
+                </div>
+                
+                <!-- Action Buttons -->
+                <div class="timer-action-buttons">
+                    <button class="timer-action-btn timer-cancel-btn" id="timer-cancel-btn">取消</button>
+                    <button class="timer-action-btn timer-start-btn" id="timer-start-btn">开始</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Timer Display Widget -->
+    <div id="timer-display">
+        <div class="timer-display-header">
+            <div class="timer-display-mode">正计时</div>
+            <button class="timer-close-btn" id="timer-display-close-btn" title="关闭">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+            </button>
+        </div>
+        <div class="timer-display-time">00:00:00</div>
+        <div class="timer-display-controls">
+            <button class="timer-control-btn" id="timer-play-pause-btn">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="6" y="4" width="4" height="16"></rect>
+                    <rect x="14" y="4" width="4" height="16"></rect>
+                </svg>
+                暂停
+            </button>
+            <button class="timer-control-btn" id="timer-reset-btn">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"></path>
+                    <path d="M21 3v5h-5"></path>
+                    <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"></path>
+                    <path d="M3 21v-5h5"></path>
+                </svg>
+                重置
+            </button>
+        </div>
     </div>
 
     <script src="js/drawing.js"></script>
@@ -823,7 +1063,10 @@
     <script src="js/background.js"></script>
     <script src="js/image-controls.js"></script>
     <script src="js/stroke-controls.js"></script>
+    <script src="js/collapsible.js"></script>
     <script src="js/time-display.js"></script>
+    <script src="js/modules/time-display-controls.js"></script>
+    <script src="js/modules/timer.js"></script>
     <script src="js/settings.js"></script>
     <script src="js/announcement.js"></script>
     <script src="js/export.js"></script>
