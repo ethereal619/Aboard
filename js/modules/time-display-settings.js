@@ -288,7 +288,7 @@ class TimeDisplaySettingsModal {
         // Apply changes to the time display
         this.timeDisplayManager.applySettings();
         this.timeDisplayManager.updateDisplay();
-        this.timeDisplayManager.saveSettings();
+        // Note: saveSettings() is called within applySettings() in time-display.js
     }
 }
 
