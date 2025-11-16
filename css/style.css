@@ -318,6 +318,8 @@ body {
     position: relative;
     z-index: 1;
     pointer-events: none;
+    display: block; /* Ensure block display to remove any text baseline spacing */
+    margin: 0; /* Remove any default margin */
 }
 
 .custom-color-picker-input {

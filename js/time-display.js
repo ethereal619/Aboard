@@ -95,24 +95,13 @@ class TimeDisplayManager {
         const timeString = this.formatTime(now);
         const dateString = this.formatDate(now);
         
-        let html = '<div class="time-display-content">';
+        let html = '';
         if (this.showTime) {
             html += `<div class="time-line" style="font-size: ${this.fontSize * 1.2}px; font-weight: 600;">${timeString}</div>`;
         }
         if (this.showDate) {
             html += `<div class="time-line" style="font-size: ${this.fontSize}px; ${this.showTime ? 'margin-top: 4px;' : ''}">${dateString}</div>`;
         }
-        html += '</div>';
-        
-        // Add settings icon button (appears on hover)
-        html += `
-            <button id="time-display-settings-btn" class="time-display-widget-settings-btn" title="设置" onclick="event.stopPropagation();">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <circle cx="12" cy="12" r="3"></circle>
-                    <path d="M12 1v6m0 6v6M5.6 5.6l4.2 4.2m4.2 4.2l4.2 4.2M1 12h6m6 0h6M5.6 18.4l4.2-4.2m4.2-4.2l4.2-4.2"></path>
-                </svg>
-            </button>
-        `;
         
         this.timeDisplayElement.innerHTML = html;
     }
