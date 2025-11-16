@@ -315,12 +315,14 @@ body {
 }
 
 .color-picker-icon-btn svg {
+    width: 24px;  /* Larger size for better visibility */
+    height: 24px;
     color: #666;
     position: relative;
     z-index: 1;
     pointer-events: none;
     display: block; /* Ensure block display to remove any text baseline spacing */
-    margin: 0; /* Remove any default margin */
+    margin: 0 auto; /* Center horizontally */
 }
 
 .custom-color-picker-input {

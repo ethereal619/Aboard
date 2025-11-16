@@ -203,7 +203,7 @@ class TimeDisplaySettingsModal {
         const opacitySlider = document.getElementById('td-time-opacity-slider');
         const opacityInput = document.getElementById('td-time-opacity-input');
         const opacityValue = document.getElementById('td-time-opacity-value');
-        const opacity = Math.round((this.timeDisplayManager.opacity || 1) * 100);
+        const opacity = this.timeDisplayManager.opacity || 100; // Already in 0-100 range, no need to multiply
         if (opacitySlider && opacityInput) {
             opacitySlider.value = opacity;
             opacityInput.value = opacity;
@@ -275,7 +275,7 @@ class TimeDisplaySettingsModal {
         
         // Get opacity
         const opacityInput = document.getElementById('td-time-opacity-input');
-        if (opacityInput) this.timeDisplayManager.opacity = parseInt(opacityInput.value) / 100;
+        if (opacityInput) this.timeDisplayManager.opacity = parseInt(opacityInput.value); // Store as 0-100, not 0-1
         
         // Get fullscreen mode
         const activeFsBtn = document.querySelector('.fullscreen-mode-btn[data-td-mode].active');
