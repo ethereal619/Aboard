@@ -36,6 +36,12 @@
     overflow-x: hidden;
 }
 
+/* Time display area specific checkbox styling - narrower width */
+#time-display-area .checkbox-label {
+    max-width: fit-content;
+    width: auto;
+}
+
 /* Time Display Widget */
 #time-display {
     position: fixed;

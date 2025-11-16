@@ -175,6 +175,27 @@
 }
 
 /* Timer Color Settings */
+.timer-color-checkbox {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.timer-color-checkbox input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+}
+
+.timer-color-checkbox label {
+    font-size: 14px;
+    font-weight: 600;
+    color: #333;
+    cursor: pointer;
+    margin: 0;
+}
+
 .timer-color-settings {
     margin-top: 12px;
 }
@@ -196,6 +217,14 @@
     font-weight: 600;
     color: #666;
     margin-bottom: 8px;
+}
+
+/* Center the color picker icon button */
+.timer-color-picker-icon {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-top: 8px;
 }
 
 /* Sound Settings */

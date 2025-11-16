@@ -969,8 +969,12 @@
                 
                 <!-- Color Settings -->
                 <div class="timer-input-group">
-                    <label>颜色设置</label>
-                    <div class="timer-color-settings">
+                    <div class="timer-color-checkbox">
+                        <input type="checkbox" id="timer-color-checkbox">
+                        <label for="timer-color-checkbox">调整颜色</label>
+                    </div>
+                    
+                    <div class="timer-color-settings" id="timer-color-settings" style="display: none;">
                         <div class="timer-color-row">
                             <div class="timer-color-item">
                                 <label>字体颜色</label>
@@ -988,7 +992,7 @@
                                         <button class="color-btn" data-timer-text-color="#FF8800" style="background-color: #FF8800;" title="橙色"></button>
                                     </div>
                                 </div>
-                                <label class="color-picker-icon-btn" for="custom-timer-text-color-picker" title="自定义颜色" style="margin-top: 8px;">
+                                <label class="color-picker-icon-btn timer-color-picker-icon" for="custom-timer-text-color-picker" title="自定义颜色">
                                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                         <path d="M20 14.66V20a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h5.34"></path>
                                         <polygon points="18 2 22 6 12 16 8 16 8 12 18 2"></polygon>
@@ -1012,7 +1016,7 @@
                                         <button class="color-btn" data-timer-bg-color="#FFE5CC" style="background-color: #FFE5CC;" title="浅橙"></button>
                                     </div>
                                 </div>
-                                <label class="color-picker-icon-btn" for="custom-timer-bg-color-picker" title="自定义颜色" style="margin-top: 8px;">
+                                <label class="color-picker-icon-btn timer-color-picker-icon" for="custom-timer-bg-color-picker" title="自定义颜色">
                                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                         <path d="M20 14.66V20a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h5.34"></path>
                                         <polygon points="18 2 22 6 12 16 8 16 8 12 18 2"></polygon>

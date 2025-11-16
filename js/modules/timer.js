@@ -986,6 +986,19 @@ class TimerManager {
             });
         });
         
+        // Timer color settings checkbox toggle
+        const timerColorCheckbox = document.getElementById('timer-color-checkbox');
+        const timerColorSettings = document.getElementById('timer-color-settings');
+        if (timerColorCheckbox && timerColorSettings) {
+            timerColorCheckbox.addEventListener('change', (e) => {
+                if (e.target.checked) {
+                    timerColorSettings.style.display = 'block';
+                } else {
+                    timerColorSettings.style.display = 'none';
+                }
+            });
+        }
+        
         // Custom color pickers
         const customTextColorPicker = document.getElementById('custom-timer-text-color-picker');
         if (customTextColorPicker) {
