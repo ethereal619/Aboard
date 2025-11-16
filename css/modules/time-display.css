@@ -13,6 +13,10 @@
     min-width: 280px;
     display: none;
     cursor: move;
+    /* Improved touch device support */
+    touch-action: none;
+    /* Performance optimization */
+    will-change: transform, left, top;
 }
 
 #time-display-area.show {

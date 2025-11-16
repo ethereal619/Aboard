@@ -1131,32 +1131,45 @@ class DrawingBoard {
         const featureArea = document.getElementById('feature-area');
         const toolbar = document.getElementById('toolbar');
         
+        // Unified start handler for mouse and touch events
+        const handleDragStart = (e, element) => {
+            if (e.target.closest('button') || e.target.closest('input')) return;
+            
+            this.isDraggingPanel = true;
+            this.draggedElement = element;
+            
+            const rect = element.getBoundingClientRect();
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+            
+            this.dragOffset.x = clientX - rect.left;
+            this.dragOffset.y = clientY - rect.top;
+            
+            this.draggedElementWidth = rect.width;
+            this.draggedElementHeight = rect.height;
+            
+            element.classList.add('dragging');
+            element.style.transition = 'none';
+            
+            e.preventDefault();
+        };
+        
         [historyControls, configArea, timeDisplayArea, featureArea, toolbar].forEach(element => {
-            element.addEventListener('mousedown', (e) => {
-                if (e.target.closest('button') || e.target.closest('input')) return;
-                
-                this.isDraggingPanel = true;
-                this.draggedElement = element;
-                
-                const rect = element.getBoundingClientRect();
-                this.dragOffset.x = e.clientX - rect.left;
-                this.dragOffset.y = e.clientY - rect.top;
-                
-                this.draggedElementWidth = rect.width;
-                this.draggedElementHeight = rect.height;
-                
-                element.classList.add('dragging');
-                element.style.transition = 'none';
-                
-                e.preventDefault();
-            });
+            // Mouse events
+            element.addEventListener('mousedown', (e) => handleDragStart(e, element));
+            // Touch events - improve compatibility with large-screen touch devices
+            element.addEventListener('touchstart', (e) => handleDragStart(e, element), { passive: false });
         });
         
-        document.addEventListener('mousemove', (e) => {
+        // Unified move handler for mouse and touch events
+        const handleDragMove = (e) => {
             if (!this.isDraggingPanel || !this.draggedElement) return;
             
-            let x = e.clientX - this.dragOffset.x;
-            let y = e.clientY - this.dragOffset.y;
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+            
+            let x = clientX - this.dragOffset.x;
+            let y = clientY - this.dragOffset.y;
             
             const edgeSnapDistance = 30;
             const windowWidth = window.innerWidth;
@@ -1228,16 +1241,24 @@ class DrawingBoard {
             this.draggedElement.style.transform = 'none';
             this.draggedElement.style.right = 'auto';
             this.draggedElement.style.bottom = 'auto';
-        });
+        };
         
-        document.addEventListener('mouseup', () => {
+        // Unified end handler for mouse and touch events
+        const handleDragEnd = () => {
             if (this.isDraggingPanel && this.draggedElement) {
                 this.draggedElement.classList.remove('dragging');
                 this.draggedElement.style.transition = '';
                 this.isDraggingPanel = false;
                 this.draggedElement = null;
             }
-        });
+        };
+        
+        // Add both mouse and touch event listeners for better touch device support
+        document.addEventListener('mousemove', handleDragMove);
+        document.addEventListener('mouseup', handleDragEnd);
+        document.addEventListener('touchmove', handleDragMove, { passive: false });
+        document.addEventListener('touchend', handleDragEnd);
+        document.addEventListener('touchcancel', handleDragEnd);
     }
     
     setTool(tool, showConfig = true) {

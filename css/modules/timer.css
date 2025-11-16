@@ -442,6 +442,10 @@
     min-width: 220px;
     max-width: 300px;
     transition: all 0.3s ease;
+    /* Improved touch device support */
+    touch-action: none;
+    /* Performance optimization */
+    will-change: transform, left, top;
 }
 
 .timer-display-widget.dragging {

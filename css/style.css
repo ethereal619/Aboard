@@ -14,9 +14,13 @@ body {
     width: 100vw;
     height: 100vh;
     background-color: #f5f5f5;
+    /* Improved touch device support */
     touch-action: none;
     -webkit-user-select: none;
     user-select: none;
+    /* Performance optimization: use GPU acceleration */
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
 }
 
 /* Canvas */
@@ -59,6 +63,10 @@ body {
     gap: 10px;
     z-index: 1000;
     cursor: move;
+    /* Improved touch device support */
+    touch-action: none;
+    /* Performance optimization */
+    will-change: transform, left, top;
 }
 
 #history-controls.top-left {
@@ -160,6 +168,10 @@ body {
     min-width: 320px;
     display: none;
     cursor: move;
+    /* Improved touch device support */
+    touch-action: none;
+    /* Performance optimization */
+    will-change: transform, left, top;
 }
 
 #config-area.show {
@@ -387,6 +399,10 @@ body {
     border-radius: 16px;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
     cursor: move;
+    /* Improved touch device support */
+    touch-action: none;
+    /* Performance optimization */
+    will-change: transform, left, bottom;
 }
 
 #toolbar.dragging {
