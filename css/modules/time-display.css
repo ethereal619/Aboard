@@ -46,7 +46,7 @@
 .time-display-options-row {
     display: flex;
     align-items: center;
-    gap: 12px; /* Reduced from 16px for less spacing */
+    gap: 8px; /* Reduced from 12px for even less spacing */
 }
 
 .time-display-checkboxes {

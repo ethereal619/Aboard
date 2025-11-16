@@ -387,6 +387,8 @@ class DrawingBoard {
                 this.settingsManager.updateToolbarTextVisibility();
                 // Reposition toolbars to ensure they stay within viewport
                 this.repositionToolbarsOnResize();
+                // Reposition modals to ensure they stay within viewport
+                this.repositionModalsOnResize();
                 // Don't update config-area scale on window resize (fix #2)
                 // this.updateConfigAreaScale();
             }, 150); // 150ms debounce delay
@@ -1121,6 +1123,42 @@ class DrawingBoard {
             }
             if (top < EDGE_SPACING) {
                 panel.style.top = `${EDGE_SPACING}px`;
+            }
+        });
+    }
+    
+    repositionModalsOnResize() {
+        // Reposition modal content to stay within viewport on window resize
+        const modals = [
+            document.querySelector('#settings-modal .settings-modal-content'),
+            document.querySelector('#timer-settings-modal .timer-modal-content'),
+            document.querySelector('#time-display-settings-modal .timer-modal-content')
+        ];
+        
+        modals.forEach(modalContent => {
+            if (!modalContent) return;
+            
+            // Only reposition if modal is currently visible
+            const modal = modalContent.closest('.show, [style*="display: flex"]');
+            if (!modal) return;
+            
+            const rect = modalContent.getBoundingClientRect();
+            const windowWidth = window.innerWidth;
+            const windowHeight = window.innerHeight;
+            
+            // Check if modal content exceeds viewport
+            const EDGE_SPACING = 20;
+            
+            // Reset any transforms or positions first
+            modalContent.style.transform = '';
+            modalContent.style.position = '';
+            
+            // If modal is larger than viewport, it will be scrollable via parent
+            // Just ensure it's centered
+            if (rect.width > windowWidth - 2 * EDGE_SPACING || 
+                rect.height > windowHeight - 2 * EDGE_SPACING) {
+                // Modal is too large - parent modal should handle scrolling
+                // No specific positioning needed
             }
         });
     }

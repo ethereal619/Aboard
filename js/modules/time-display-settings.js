@@ -84,6 +84,27 @@ class TimeDisplaySettingsModal {
             });
         });
         
+        // Custom color pickers
+        const customTimeColorPicker = document.getElementById('td-custom-time-color-picker');
+        if (customTimeColorPicker) {
+            customTimeColorPicker.addEventListener('change', (e) => {
+                // Deactivate all preset color buttons
+                document.querySelectorAll('.color-btn[data-td-time-color]').forEach(b => b.classList.remove('active'));
+                // Store custom color as data attribute for later use
+                customTimeColorPicker.dataset.selectedColor = e.target.value;
+            });
+        }
+        
+        const customBgColorPicker = document.getElementById('td-custom-bg-color-picker');
+        if (customBgColorPicker) {
+            customBgColorPicker.addEventListener('change', (e) => {
+                // Deactivate all preset background color buttons
+                document.querySelectorAll('.color-btn[data-td-time-bg-color]').forEach(b => b.classList.remove('active'));
+                // Store custom color as data attribute for later use
+                customBgColorPicker.dataset.selectedColor = e.target.value;
+            });
+        }
+        
         // Font size slider sync
         const fontSlider = document.getElementById('td-time-font-size-slider');
         const fontInput = document.getElementById('td-time-font-size-input');
@@ -229,10 +250,24 @@ class TimeDisplaySettingsModal {
         
         // Get colors
         const activeColorBtn = document.querySelector('.color-btn[data-td-time-color].active');
-        if (activeColorBtn) this.timeDisplayManager.timeColor = activeColorBtn.dataset.tdTimeColor;
+        const customTimeColorPicker = document.getElementById('td-custom-time-color-picker');
+        
+        if (activeColorBtn) {
+            this.timeDisplayManager.timeColor = activeColorBtn.dataset.tdTimeColor;
+        } else if (customTimeColorPicker && customTimeColorPicker.dataset.selectedColor) {
+            // Use custom color if no preset is active
+            this.timeDisplayManager.timeColor = customTimeColorPicker.dataset.selectedColor;
+        }
         
         const activeBgColorBtn = document.querySelector('.color-btn[data-td-time-bg-color].active');
-        if (activeBgColorBtn) this.timeDisplayManager.bgColor = activeBgColorBtn.dataset.tdTimeBgColor;
+        const customBgColorPicker = document.getElementById('td-custom-bg-color-picker');
+        
+        if (activeBgColorBtn) {
+            this.timeDisplayManager.bgColor = activeBgColorBtn.dataset.tdTimeBgColor;
+        } else if (customBgColorPicker && customBgColorPicker.dataset.selectedColor) {
+            // Use custom background color if no preset is active
+            this.timeDisplayManager.bgColor = customBgColorPicker.dataset.selectedColor;
+        }
         
         // Get font size
         const fontInput = document.getElementById('td-time-font-size-input');
