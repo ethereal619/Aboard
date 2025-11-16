@@ -174,6 +174,30 @@
     color: #999;
 }
 
+/* Timer Color Settings */
+.timer-color-settings {
+    margin-top: 12px;
+}
+
+.timer-color-row {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+}
+
+.timer-color-item {
+    flex: 1;
+    min-width: 180px;
+}
+
+.timer-color-item > label {
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    color: #666;
+    margin-bottom: 8px;
+}
+
 /* Sound Settings */
 .timer-sound-group {
     margin-bottom: 20px;

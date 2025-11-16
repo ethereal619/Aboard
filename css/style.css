@@ -150,6 +150,7 @@ body {
 #config-area {
     position: fixed;
     left: 50%;
+    bottom: 100px; /* Position above toolbar (toolbar is at bottom: 20px + estimated height ~60px + gap 20px) */
     transform: translateX(-50%);
     z-index: 999;
     padding: 16px 24px;
@@ -1007,6 +1008,7 @@ body {
     align-items: center;
     gap: 10px;
     cursor: pointer;
+    max-width: 50%; /* Limit horizontal width to 50% */
 }
 
 .checkbox-label input[type="checkbox"] {

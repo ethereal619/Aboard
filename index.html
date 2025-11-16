@@ -967,6 +967,63 @@
                     </div>
                 </div>
                 
+                <!-- Color Settings -->
+                <div class="timer-input-group">
+                    <label>颜色设置</label>
+                    <div class="timer-color-settings">
+                        <div class="timer-color-row">
+                            <div class="timer-color-item">
+                                <label>字体颜色</label>
+                                <div class="color-picker-row">
+                                    <div class="color-picker-main">
+                                        <button class="color-btn active" data-timer-text-color="#333333" style="background-color: #333333;" title="深灰（默认）"></button>
+                                        <button class="color-btn" data-timer-text-color="#000000" style="background-color: #000000;" title="黑色"></button>
+                                        <button class="color-btn" data-timer-text-color="#FFFFFF" style="background-color: #FFFFFF; border: 1px solid #ccc;" title="白色"></button>
+                                        <button class="color-btn" data-timer-text-color="#FF0000" style="background-color: #FF0000;" title="红色"></button>
+                                    </div>
+                                    <div class="color-picker-main">
+                                        <button class="color-btn" data-timer-text-color="#0000FF" style="background-color: #0000FF;" title="蓝色"></button>
+                                        <button class="color-btn" data-timer-text-color="#00FF00" style="background-color: #00FF00;" title="绿色"></button>
+                                        <button class="color-btn" data-timer-text-color="#FFFF00" style="background-color: #FFFF00; border: 1px solid #ccc;" title="黄色"></button>
+                                        <button class="color-btn" data-timer-text-color="#FF8800" style="background-color: #FF8800;" title="橙色"></button>
+                                    </div>
+                                </div>
+                                <label class="color-picker-icon-btn" for="custom-timer-text-color-picker" title="自定义颜色" style="margin-top: 8px;">
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M20 14.66V20a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h5.34"></path>
+                                        <polygon points="18 2 22 6 12 16 8 16 8 12 18 2"></polygon>
+                                    </svg>
+                                    <input type="color" id="custom-timer-text-color-picker" class="custom-color-picker-input" value="#333333">
+                                </label>
+                            </div>
+                            <div class="timer-color-item">
+                                <label>背景颜色</label>
+                                <div class="color-picker-row">
+                                    <div class="color-picker-main">
+                                        <button class="color-btn active" data-timer-bg-color="#FFFFFF" style="background-color: #FFFFFF; border: 1px solid #ccc;" title="白色（默认）"></button>
+                                        <button class="color-btn" data-timer-bg-color="#000000" style="background-color: #000000;" title="黑色"></button>
+                                        <button class="color-btn" data-timer-bg-color="#F0F0F0" style="background-color: #F0F0F0; border: 1px solid #ccc;" title="浅灰"></button>
+                                        <button class="color-btn" data-timer-bg-color="#FFE5E5" style="background-color: #FFE5E5;" title="浅红"></button>
+                                    </div>
+                                    <div class="color-picker-main">
+                                        <button class="color-btn" data-timer-bg-color="#E5F0FF" style="background-color: #E5F0FF;" title="浅蓝"></button>
+                                        <button class="color-btn" data-timer-bg-color="#E5FFE5" style="background-color: #E5FFE5;" title="浅绿"></button>
+                                        <button class="color-btn" data-timer-bg-color="#FFFFE5" style="background-color: #FFFFE5; border: 1px solid #ccc;" title="浅黄"></button>
+                                        <button class="color-btn" data-timer-bg-color="#FFE5CC" style="background-color: #FFE5CC;" title="浅橙"></button>
+                                    </div>
+                                </div>
+                                <label class="color-picker-icon-btn" for="custom-timer-bg-color-picker" title="自定义颜色" style="margin-top: 8px;">
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M20 14.66V20a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h5.34"></path>
+                                        <polygon points="18 2 22 6 12 16 8 16 8 12 18 2"></polygon>
+                                    </svg>
+                                    <input type="color" id="custom-timer-bg-color-picker" class="custom-color-picker-input" value="#FFFFFF">
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
                 <!-- Sound Settings (only for countdown) -->
                 <div class="timer-sound-group disabled">
                     <div class="sound-checkbox">
