@@ -135,6 +135,7 @@ class I18n {
      * Apply translations to all elements with data-i18n attribute
      */
     applyTranslations() {
+        // Translate elements with data-i18n attribute for text content
         const elements = document.querySelectorAll('[data-i18n]');
         
         elements.forEach(el => {
@@ -142,30 +143,188 @@ class I18n {
             const translation = this.t(key);
             
             if (translation !== key) {
-                // Check if element is an input with placeholder
-                if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') {
+                // Update element content based on element type
+                if (el.tagName === 'INPUT' && (el.type === 'button' || el.type === 'submit')) {
+                    el.value = translation;
+                } else if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') {
+                    // For input elements, only update placeholder if specified
                     const placeholderKey = el.getAttribute('data-i18n-placeholder');
                     if (placeholderKey) {
                         el.placeholder = this.t(placeholderKey);
                     }
-                }
-                
-                // Update element content
-                if (el.tagName === 'INPUT' && el.type === 'button') {
-                    el.value = translation;
-                } else if (el.hasAttribute('title')) {
-                    const titleKey = el.getAttribute('data-i18n-title');
-                    if (titleKey) {
-                        el.title = this.t(titleKey);
+                } else {
+                    // For regular elements, update text content
+                    // Only update if element has no children with data-i18n attribute
+                    if (!el.querySelector('[data-i18n]')) {
+                        el.textContent = translation;
                     }
-                }
-                
-                // Update text content for regular elements
-                if (!el.querySelector('[data-i18n]')) {
-                    el.textContent = translation;
                 }
             }
         });
+        
+        // Translate title attributes
+        const titleElements = document.querySelectorAll('[data-i18n-title]');
+        titleElements.forEach(el => {
+            const key = el.getAttribute('data-i18n-title');
+            const translation = this.t(key);
+            if (translation !== key) {
+                el.title = translation;
+            }
+        });
+        
+        // Update document title
+        const titleKey = document.documentElement.getAttribute('data-i18n-title');
+        if (titleKey) {
+            document.title = this.t(titleKey);
+        } else {
+            // Default title translation
+            document.title = this.t('app.title');
+        }
+        
+        // Auto-translate common elements based on their ID or class
+        this.autoTranslateElements();
+    }
+    
+    /**
+     * Auto-translate elements based on common patterns
+     * This reduces the need to manually add data-i18n to every element
+     */
+    autoTranslateElements() {
+        // Translate toolbar buttons
+        const toolbarMappings = {
+            'undo-btn': { span: 'toolbar.undo', title: 'toolbar.undo' },
+            'redo-btn': { span: 'toolbar.redo', title: 'toolbar.redo' },
+            'pen-btn': { span: 'toolbar.pen', title: 'toolbar.pen' },
+            'pan-btn': { span: 'toolbar.move', title: 'toolbar.move' },
+            'eraser-btn': { span: 'toolbar.eraser', title: 'toolbar.eraser' },
+            'clear-btn': { span: 'toolbar.clear', title: 'toolbar.clear' },
+            'background-btn': { span: 'toolbar.background', title: 'toolbar.background' },
+            'more-btn': { span: 'toolbar.more', title: 'toolbar.more' },
+            'settings-btn': { span: 'toolbar.settings', title: 'toolbar.settings' },
+            'export-btn-top': { title: 'toolbar.export' },
+            'zoom-out-btn': { title: 'toolbar.zoomOut' },
+            'zoom-in-btn': { title: 'toolbar.zoomIn' },
+            'fullscreen-btn': { title: 'toolbar.fullscreen' }
+        };
+        
+        Object.entries(toolbarMappings).forEach(([id, mapping]) => {
+            const el = document.getElementById(id);
+            if (el) {
+                if (mapping.span) {
+                    const span = el.querySelector('span');
+                    if (span) {
+                        span.textContent = this.t(mapping.span);
+                    }
+                }
+                if (mapping.title) {
+                    el.title = this.t(mapping.title);
+                }
+            }
+        });
+        
+        // Translate zoom input placeholder
+        const zoomInput = document.getElementById('zoom-input');
+        if (zoomInput) {
+            zoomInput.title = this.t('toolbar.zoomPlaceholder');
+        }
+        
+        // Translate configuration panel labels
+        this.translateConfigPanels();
+        
+        // Translate settings modal
+        this.translateSettingsModal();
+        
+        // Translate modals
+        this.translateModals();
+    }
+    
+    translateConfigPanels() {
+        // Pen configuration
+        const penTypeButtons = {
+            'normal': 'tools.pen.normal',
+            'pencil': 'tools.pen.pencil',
+            'ballpoint': 'tools.pen.ballpoint',
+            'fountain': 'tools.pen.fountain',
+            'brush': 'tools.pen.brush'
+        };
+        
+        document.querySelectorAll('.pen-type-btn').forEach(btn => {
+            const penType = btn.getAttribute('data-pen-type');
+            if (penType && penTypeButtons[penType]) {
+                btn.textContent = this.t(penTypeButtons[penType]);
+            }
+        });
+        
+        // Eraser shape buttons
+        const eraserShapes = {
+            'circle': 'tools.eraser.shapeCircle',
+            'rectangle': 'tools.eraser.shapeRectangle'
+        };
+        
+        document.querySelectorAll('.eraser-shape-btn').forEach(btn => {
+            const shape = btn.getAttribute('data-eraser-shape');
+            if (shape) {
+                btn.textContent = shape === 'circle' ? this.t('tools.eraser.shapeCircle') || '圆形' : this.t('tools.eraser.shapeRectangle') || '方形';
+            }
+        });
+        
+        // Background patterns
+        const patterns = {
+            'blank': 'background.blank',
+            'dots': 'background.dots',
+            'grid': 'background.grid',
+            'tianzige': 'background.tianzige',
+            'english-lines': 'background.english4line',
+            'music-staff': 'background.musicStaff',
+            'coordinate': 'background.coordinate'
+        };
+        
+        document.querySelectorAll('.pattern-option-btn').forEach(btn => {
+            const pattern = btn.getAttribute('data-pattern');
+            if (pattern && patterns[pattern]) {
+                btn.textContent = this.t(patterns[pattern]);
+            }
+        });
+    }
+    
+    translateSettingsModal() {
+        // Settings tab labels
+        const tabs = document.querySelectorAll('.settings-tab-icon span');
+        const tabNames = ['general', 'display', 'canvas', 'background', 'about', 'announcement', 'more'];
+        
+        tabs.forEach((span, index) => {
+            if (tabNames[index]) {
+                // Use the translated tab name
+                const key = `settings.tabs.${tabNames[index]}`;
+                const translation = this.t(key);
+                if (translation !== key) {
+                    span.textContent = translation;
+                }
+            }
+        });
+    }
+    
+    translateModals() {
+        // Clear confirmation modal
+        const confirmTitle = document.querySelector('#confirm-modal h2');
+        if (confirmTitle) {
+            confirmTitle.textContent = this.t('tools.clear.confirm');
+        }
+        
+        const confirmMessage = document.querySelector('#confirm-modal .confirm-message');
+        if (confirmMessage) {
+            confirmMessage.textContent = this.t('tools.clear.message');
+        }
+        
+        const confirmOk = document.getElementById('confirm-ok-btn');
+        if (confirmOk) {
+            confirmOk.textContent = this.t('common.confirm');
+        }
+        
+        const confirmCancel = document.getElementById('confirm-cancel-btn');
+        if (confirmCancel) {
+            confirmCancel.textContent = this.t('common.cancel');
+        }
     }
 
     /**

@@ -63,7 +63,9 @@ window.translations = {
             type: '橡皮类型',
             normal: '普通橡皮',
             pixel: '像素橡皮',
-            size: '橡皮大小'
+            size: '橡皮大小',
+            shapeCircle: '圆形',
+            shapeRectangle: '方形'
         },
         clear: {
             title: '清空画布',
@@ -77,12 +79,16 @@ window.translations = {
         title: '背景',
         color: '背景颜色',
         pattern: '背景图案',
+        blank: '空白',
         none: '无',
         dots: '点阵',
         grid: '方格',
         lines: '横线',
         tianzige: '田字格',
-        english4line: '英语四线格',
+        english4line: '四线格',
+        musicStaff: '五线谱',
+        coordinate: '坐标系',
+        image: '图片',
         opacity: '背景透明度',
         opacityHint: '调整背景的透明度,100%为完全不透明',
         contrast: '对比度',
@@ -103,10 +109,14 @@ window.translations = {
     settings: {
         title: '设置',
         tabs: {
+            general: '通用',
             display: '显示',
             pen: '笔',
             eraser: '橡皮',
+            canvas: '画布',
             background: '背景',
+            about: '关于',
+            announcement: '公告',
             more: '更多'
         },
         display: {

@@ -63,7 +63,9 @@ window.translations = {
             type: 'Eraser Type',
             normal: 'Normal Eraser',
             pixel: 'Pixel Eraser',
-            size: 'Eraser Size'
+            size: 'Eraser Size',
+            shapeCircle: 'Circle',
+            shapeRectangle: 'Rectangle'
         },
         clear: {
             title: 'Clear Canvas',
@@ -77,12 +79,16 @@ window.translations = {
         title: 'Background',
         color: 'Background Color',
         pattern: 'Background Pattern',
+        blank: 'Blank',
         none: 'None',
         dots: 'Dots',
         grid: 'Grid',
         lines: 'Lines',
         tianzige: 'Tianzige (Chinese)',
         english4line: 'English 4-Line',
+        musicStaff: 'Music Staff',
+        coordinate: 'Coordinate',
+        image: 'Image',
         opacity: 'Background Opacity',
         opacityHint: 'Adjust background transparency, 100% is fully opaque',
         contrast: 'Contrast',
@@ -103,10 +109,14 @@ window.translations = {
     settings: {
         title: 'Settings',
         tabs: {
+            general: 'General',
             display: 'Display',
             pen: 'Pen',
             eraser: 'Eraser',
+            canvas: 'Canvas',
             background: 'Background',
+            about: 'About',
+            announcement: 'Announcement',
             more: 'More'
         },
         display: {
