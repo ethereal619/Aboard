@@ -2,6 +2,8 @@
 
 # Aboard
 
+**中文** | [English](README.en.md)
+
 > 一个简约优雅的网页白板应用，专为教学和演示设计 | 𝓙𝓾𝓼𝓽 𝓪 𝓫𝓸𝓪𝓻𝓭.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
