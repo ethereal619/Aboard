@@ -2226,9 +2226,19 @@ class DrawingBoard {
 
 // Initialize the application
 if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => {
+    document.addEventListener('DOMContentLoaded', async () => {
+        // Initialize i18n first
+        if (window.i18n) {
+            await window.i18n.init();
+        }
         new DrawingBoard();
     });
 } else {
-    new DrawingBoard();
+    // If DOM is already loaded, initialize immediately
+    (async () => {
+        if (window.i18n) {
+            await window.i18n.init();
+        }
+        new DrawingBoard();
+    })();
 }
