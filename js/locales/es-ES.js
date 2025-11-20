@@ -63,7 +63,9 @@ window.translations = {
             type: 'Tipo de borrador',
             normal: 'Borrador normal',
             pixel: 'Borrador de píxel',
-            size: 'Tamaño del borrador'
+            size: 'Tamaño del borrador',
+            shapeCircle: 'Círculo',
+            shapeRectangle: 'Rectángulo'
         },
         clear: {
             title: 'Borrar lienzo',
@@ -76,12 +78,17 @@ window.translations = {
     background: {
         title: 'Fondo',
         color: 'Color de fondo',
-        pattern: 'Patrón de fondo',
+        pattern: 'Background Pattern',
+        blank: 'En blanco',
+        Patrón de fondo',
         none: 'Ninguno',
         dots: 'Puntos',
         grid: 'Cuadrícula',
         lines: 'Líneas',
         tianzige: 'Tianzige (Chino)',
+        musicStaff: 'Pentagrama',
+        coordinate: 'Coordenadas',
+        image: 'Imagen',
         english4line: 'Línea inglesa 4',
         opacity: 'Opacidad del fondo',
         opacityHint: 'Ajustar la transparencia del fondo, 100% es completamente opaco',

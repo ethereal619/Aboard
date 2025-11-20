@@ -63,7 +63,9 @@ window.translations = {
             type: 'Type de gomme',
             normal: 'Gomme normale',
             pixel: 'Gomme pixel',
-            size: 'Taille de la gomme'
+            size: 'Taille de la gomme',
+            shapeCircle: 'Cercle',
+            shapeRectangle: 'Rectangle'
         },
         clear: {
             title: 'Effacer le canevas',
@@ -76,12 +78,17 @@ window.translations = {
     background: {
         title: 'Arrière-plan',
         color: 'Couleur d\'arrière-plan',
-        pattern: 'Motif d\'arrière-plan',
+        pattern: 'Background Pattern',
+        blank: 'Vide',
+        Motif d\'arrière-plan',
         none: 'Aucun',
         dots: 'Points',
         grid: 'Grille',
         lines: 'Lignes',
         tianzige: 'Tianzige (Chinois)',
+        musicStaff: 'Portée musicale',
+        coordinate: 'Coordonnées',
+        image: 'Image',
         english4line: 'Ligne anglaise 4',
         opacity: 'Opacité de l\'arrière-plan',
         opacityHint: 'Ajuster la transparence de l\'arrière-plan, 100% est complètement opaque',

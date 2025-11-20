@@ -63,7 +63,9 @@ window.translations = {
             type: '지우개 유형',
             normal: '일반 지우개',
             pixel: '픽셀 지우개',
-            size: '지우개 크기'
+            size: '지우개 크기',
+            shapeCircle: '원형',
+            shapeRectangle: '사각형'
         },
         clear: {
             title: '캔버스 지우기',
@@ -77,12 +79,16 @@ window.translations = {
         title: '배경',
         color: '배경색',
         pattern: '배경 패턴',
+        blank: '빈 화면',
         none: '없음',
         dots: '점',
         grid: '격자',
         lines: '선',
         tianzige: '田字格 (중국)',
         english4line: '영어 4선',
+        musicStaff: '오선보',
+        coordinate: '좌표계',
+        image: '이미지',
         opacity: '배경 불투명도',
         opacityHint: '배경 투명도를 조정합니다. 100%는 완전 불투명',
         contrast: '대비',
@@ -103,10 +109,14 @@ window.translations = {
     settings: {
         title: '설정',
         tabs: {
+            general: '일반',
             display: '표시',
             pen: '펜',
             eraser: '지우개',
+            canvas: '캔버스',
             background: '배경',
+            about: '정보',
+            announcement: '공지사항',
             more: '더보기'
         },
         display: {

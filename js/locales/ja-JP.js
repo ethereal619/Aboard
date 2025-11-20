@@ -63,7 +63,9 @@ window.translations = {
             type: '消しゴムの種類',
             normal: '通常消しゴム',
             pixel: 'ピクセル消しゴム',
-            size: '消しゴムのサイズ'
+            size: '消しゴムのサイズ',
+            shapeCircle: '円形',
+            shapeRectangle: '四角形'
         },
         clear: {
             title: 'キャンバスをクリア',
@@ -77,12 +79,16 @@ window.translations = {
         title: '背景',
         color: '背景色',
         pattern: '背景パターン',
+        blank: '空白',
         none: 'なし',
         dots: 'ドット',
         grid: 'グリッド',
         lines: 'ライン',
         tianzige: '田字格（中国）',
         english4line: '英語4線',
+        musicStaff: '五線譜',
+        coordinate: '座標系',
+        image: '画像',
         opacity: '背景の不透明度',
         opacityHint: '背景の透明度を調整します。100%は完全に不透明',
         contrast: 'コントラスト',
@@ -103,10 +109,14 @@ window.translations = {
     settings: {
         title: '設定',
         tabs: {
+            general: '一般',
             display: '表示',
             pen: 'ペン',
             eraser: '消しゴム',
+            canvas: 'キャンバス',
             background: '背景',
+            about: 'について',
+            announcement: 'お知らせ',
             more: 'もっと'
         },
         display: {

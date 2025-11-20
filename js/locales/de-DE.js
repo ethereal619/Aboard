@@ -63,7 +63,9 @@ window.translations = {
             type: 'Radiergummi-Typ',
             normal: 'Normaler Radiergummi',
             pixel: 'Pixel-Radiergummi',
-            size: 'Radiergummi-Größe'
+            size: 'Radiergummi-Größe',
+            shapeCircle: 'Kreis',
+            shapeRectangle: 'Rechteck'
         },
         clear: {
             title: 'Leinwand löschen',
@@ -76,12 +78,17 @@ window.translations = {
     background: {
         title: 'Hintergrund',
         color: 'Hintergrundfarbe',
-        pattern: 'Hintergrundmuster',
+        pattern: 'Background Pattern',
+        blank: 'Leer',
+        Hintergrundmuster',
         none: 'Keine',
         dots: 'Punkte',
         grid: 'Raster',
         lines: 'Linien',
         tianzige: 'Tianzige (Chinesisch)',
+        musicStaff: 'Notensystem',
+        coordinate: 'Koordinaten',
+        image: 'Bild',
         english4line: 'Englisch 4-Linien',
         opacity: 'Hintergrund-Deckkraft',
         opacityHint: 'Hintergrundtransparenz anpassen, 100% ist vollständig undurchsichtig',
