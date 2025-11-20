@@ -47,6 +47,7 @@
     display: flex;
     align-items: center;
     gap: 8px; /* Reduced from 12px for even less spacing */
+    width: fit-content; /* Fix layout bug when not at edge */
 }
 
 .time-display-checkboxes {
@@ -68,7 +69,8 @@
     transition: all 0.2s ease;
     color: #666;
     padding: 0;
-    flex-shrink: 0;
+    flex-shrink: 0; /* Don't allow shrinking to maintain size */
+    margin-left: 0; /* Remove any extra margin */
 }
 
 .time-display-settings-icon-btn:hover {
