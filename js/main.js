@@ -704,16 +704,7 @@ class DrawingBoard {
             this.settingsManager.setGlobalFont(e.target.value);
         });
         
-        // Canvas mode buttons
-        document.querySelectorAll('.canvas-mode-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const mode = e.target.dataset.mode;
-                this.settingsManager.setCanvasMode(mode);
-                document.querySelectorAll('.canvas-mode-btn').forEach(b => b.classList.remove('active'));
-                e.target.classList.add('active');
-                this.updateCanvasMode();
-            });
-        });
+        // Canvas mode buttons removed - pagination is always active
         
         // Canvas preset buttons
         document.querySelectorAll('.canvas-preset-btn').forEach(btn => {
@@ -1505,68 +1496,49 @@ class DrawingBoard {
     }
     
     applyCanvasSize() {
-        if (!this.settingsManager.infiniteCanvas) {
-            // In paginated mode, apply custom canvas size
-            const width = this.settingsManager.canvasWidth;
-            const height = this.settingsManager.canvasHeight;
-            const dpr = window.devicePixelRatio || 1;
-            
-            // Save current content
-            const oldWidth = this.canvas.width;
-            const oldHeight = this.canvas.height;
-            const imageData = this.historyManager.historyStep >= 0 ? 
-                this.ctx.getImageData(0, 0, oldWidth, oldHeight) : null;
-            
-            // Set canvas size and CSS size
-            this.canvas.width = width * dpr;
-            this.canvas.height = height * dpr;
-            this.canvas.style.width = width + 'px';
-            this.canvas.style.height = height + 'px';
-            
-            this.bgCanvas.width = width * dpr;
-            this.bgCanvas.height = height * dpr;
-            this.bgCanvas.style.width = width + 'px';
-            this.bgCanvas.style.height = height + 'px';
-            
-            // Center the canvas on the screen
-            this.canvas.style.position = 'absolute';
-            this.canvas.style.left = '50%';
-            this.canvas.style.top = '50%';
-            this.canvas.style.transform = `translate(-50%, -50%) scale(${this.drawingEngine.canvasScale})`;
-            
-            this.bgCanvas.style.position = 'absolute';
-            this.bgCanvas.style.left = '50%';
-            this.bgCanvas.style.top = '50%';
-            this.bgCanvas.style.transform = `translate(-50%, -50%) scale(${this.drawingEngine.canvasScale})`;
-            
-            // Re-apply DPR scaling to context
-            this.ctx.scale(dpr, dpr);
-            this.bgCtx.scale(dpr, dpr);
-            
-            // Restore content
-            if (imageData) {
-                this.ctx.putImageData(imageData, 0, 0);
-            }
-            
-            this.backgroundManager.drawBackground();
-        } else {
-            // In infinite canvas mode, canvas fills the viewport and is centered
-            this.canvas.style.position = 'absolute';
-            this.canvas.style.left = '50%';
-            this.canvas.style.top = '50%';
-            this.canvas.style.width = '100%';
-            this.canvas.style.height = '100%';
-            this.canvas.style.transform = `translate(-50%, -50%) scale(${this.drawingEngine.canvasScale})`;
-            
-            this.bgCanvas.style.position = 'absolute';
-            this.bgCanvas.style.left = '50%';
-            this.bgCanvas.style.top = '50%';
-            this.bgCanvas.style.width = '100%';
-            this.bgCanvas.style.height = '100%';
-            this.bgCanvas.style.transform = `translate(-50%, -50%) scale(${this.drawingEngine.canvasScale})`;
-            
-            this.resizeCanvas();
+        // Always use pagination mode now
+        const width = this.settingsManager.canvasWidth;
+        const height = this.settingsManager.canvasHeight;
+        const dpr = window.devicePixelRatio || 1;
+        
+        // Save current content
+        const oldWidth = this.canvas.width;
+        const oldHeight = this.canvas.height;
+        const imageData = this.historyManager.historyStep >= 0 ? 
+            this.ctx.getImageData(0, 0, oldWidth, oldHeight) : null;
+        
+        // Set canvas size and CSS size
+        this.canvas.width = width * dpr;
+        this.canvas.height = height * dpr;
+        this.canvas.style.width = width + 'px';
+        this.canvas.style.height = height + 'px';
+        
+        this.bgCanvas.width = width * dpr;
+        this.bgCanvas.height = height * dpr;
+        this.bgCanvas.style.width = width + 'px';
+        this.bgCanvas.style.height = height + 'px';
+        
+        // Center the canvas on the screen - ensures equal margins on all sides
+        this.canvas.style.position = 'absolute';
+        this.canvas.style.left = '50%';
+        this.canvas.style.top = '50%';
+        this.canvas.style.transform = `translate(-50%, -50%) scale(${this.drawingEngine.canvasScale})`;
+        
+        this.bgCanvas.style.position = 'absolute';
+        this.bgCanvas.style.left = '50%';
+        this.bgCanvas.style.top = '50%';
+        this.bgCanvas.style.transform = `translate(-50%, -50%) scale(${this.drawingEngine.canvasScale})`;
+        
+        // Re-apply DPR scaling to context
+        this.ctx.scale(dpr, dpr);
+        this.bgCtx.scale(dpr, dpr);
+        
+        // Restore content
+        if (imageData) {
+            this.ctx.putImageData(imageData, 0, 0);
         }
+        
+        this.backgroundManager.drawBackground();
     }
     
     // Zoom methods

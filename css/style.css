@@ -727,14 +727,15 @@ body {
 .settings-group.collapsible {
     border: 1px solid #e0e0e0;
     border-radius: 8px;
-    padding: 8px;
+    padding: 16px;
     background: #fafafa;
+    min-height: 80px;
 }
 
 /* Increase padding for settings groups with sliders */
 .settings-group.collapsible:has(.slider) {
-    padding: 12px;
-    min-height: 60px;
+    padding: 16px;
+    min-height: 100px;
 }
 
 .settings-group-header {

@@ -7,7 +7,7 @@ class SettingsManager {
         this.configScale = parseFloat(localStorage.getItem('configScale')) || 1.0;
         this.controlPosition = localStorage.getItem('controlPosition') || 'top-right';
         this.edgeSnapEnabled = localStorage.getItem('edgeSnapEnabled') !== 'false';
-        this.infiniteCanvas = localStorage.getItem('canvasMode') === 'infinite';
+        this.infiniteCanvas = false; // Always use pagination mode
         this.showZoomControls = localStorage.getItem('showZoomControls') !== 'false';
         this.showFullscreenBtn = localStorage.getItem('showFullscreenBtn') !== 'false';
         this.patternPreferences = this.loadPatternPreferences();
@@ -203,12 +203,7 @@ class SettingsManager {
         document.getElementById('edge-snap-checkbox').checked = this.edgeSnapEnabled;
         document.getElementById('show-zoom-controls-checkbox').checked = this.showZoomControls;
         
-        // Load canvas mode
-        const canvasMode = this.infiniteCanvas ? 'infinite' : 'paginated';
-        document.querySelectorAll('.canvas-mode-btn').forEach(btn => {
-            btn.classList.toggle('active', btn.dataset.mode === canvasMode);
-        });
-        this.updateCanvasSizeSettings();
+        // Canvas is always in pagination mode now
         
         // Load canvas size settings
         document.getElementById('canvas-width-input').value = this.canvasWidth;
@@ -237,16 +232,7 @@ class SettingsManager {
         this.initLanguageSelector();
     }
     
-    updateCanvasSizeSettings() {
-        const canvasSizeSettings = document.getElementById('canvas-size-settings');
-        canvasSizeSettings.style.display = this.infiniteCanvas ? 'none' : 'flex';
-    }
-    
-    setCanvasMode(mode) {
-        this.infiniteCanvas = mode === 'infinite';
-        localStorage.setItem('canvasMode', mode);
-        this.updateCanvasSizeSettings();
-    }
+    // Canvas mode is removed - always use pagination
     
     setCanvasPreset(preset) {
         this.canvasPreset = preset;
