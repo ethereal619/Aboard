@@ -215,7 +215,23 @@ window.translations = {
             preferenceHint: 'Choose which patterns to display in the config panel'
         },
         announcement: {
-            title: 'Announcement'
+            title: 'Announcement',
+            welcome: 'Welcome to Aboard!',
+            content: [
+                'Welcome to the Aboard whiteboard application!',
+                '',
+                'Usage Tips:',
+                '• Click the toolbar buttons at the bottom to select different drawing tools',
+                '• Use Ctrl+Z to undo, Ctrl+Y to redo',
+                '• Click the zoom buttons in the top right or use mouse scroll wheel to zoom',
+                '• Click the Background button to choose different background patterns',
+                '• Switch between infinite canvas or pagination mode in Settings',
+                '• Supports both touch and mouse operations',
+                '',
+                'GitHub Project: https://github.com/lifeafter619/Aboard',
+                '',
+                'Enjoy your creative journey!'
+            ]
         },
         about: {
             title: 'About Aboard',

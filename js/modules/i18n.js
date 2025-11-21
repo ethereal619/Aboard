@@ -991,8 +991,11 @@ class I18n {
     translateAboutContent() {
         // About section
         const aboutTitle = document.querySelector('#about-settings h3');
-        if (aboutTitle) {
-            aboutTitle.textContent = this.t('settings.about.title');
+        if (aboutTitle && aboutTitle.textContent.trim() === '关于 Aboard') {
+            const translation = this.t('settings.about.title');
+            if (translation !== 'settings.about.title') {
+                aboutTitle.textContent = translation;
+            }
         }
         
         // Update all about section content
@@ -1002,39 +1005,134 @@ class I18n {
             const projectIntro = aboutSections[0].querySelector('h4');
             const desc1 = aboutSections[0].querySelectorAll('p')[0];
             const desc2 = aboutSections[0].querySelectorAll('p')[1];
-            if (projectIntro) projectIntro.textContent = this.t('settings.about.projectIntro');
-            if (desc1) desc1.textContent = this.t('settings.about.description1');
-            if (desc2) desc2.textContent = this.t('settings.about.description2');
+            
+            if (projectIntro && projectIntro.textContent.trim() === '项目简介') {
+                const translation = this.t('settings.about.projectIntro');
+                if (translation !== 'settings.about.projectIntro') {
+                    projectIntro.textContent = translation;
+                }
+            }
+            if (desc1) {
+                const translation = this.t('settings.about.description1');
+                if (translation !== 'settings.about.description1') {
+                    desc1.textContent = translation;
+                }
+            }
+            if (desc2) {
+                const translation = this.t('settings.about.description2');
+                if (translation !== 'settings.about.description2') {
+                    desc2.textContent = translation;
+                }
+            }
             
             // Main features
             const featuresHeader = aboutSections[1].querySelector('h4');
-            if (featuresHeader) featuresHeader.textContent = this.t('settings.about.mainFeatures');
+            if (featuresHeader && featuresHeader.textContent.trim() === '主要功能') {
+                const translation = this.t('settings.about.mainFeatures');
+                if (translation !== 'settings.about.mainFeatures') {
+                    featuresHeader.textContent = translation;
+                }
+            }
+            
+            // Translate feature list items
+            const featureItems = aboutSections[1].querySelectorAll('li');
+            const featureKeys = [
+                'features.feature1',
+                'features.feature2',
+                'features.feature3',
+                'features.feature4',
+                'features.feature5',
+                'features.feature6',
+                'features.feature7',
+                'features.feature8',
+                'features.feature9'
+            ];
+            
+            featureItems.forEach((item, index) => {
+                if (index < featureKeys.length) {
+                    const translation = this.t(`settings.about.${featureKeys[index]}`);
+                    if (translation !== `settings.about.${featureKeys[index]}`) {
+                        item.textContent = translation;
+                    }
+                }
+            });
             
             // Tech stack
             const techHeader = aboutSections[2].querySelector('h4');
             const techContent = aboutSections[2].querySelector('p');
-            if (techHeader) techHeader.textContent = this.t('settings.about.techStack');
-            if (techContent) techContent.textContent = this.t('settings.about.tech');
+            if (techHeader && techHeader.textContent.trim() === '技术栈') {
+                const translation = this.t('settings.about.techStack');
+                if (translation !== 'settings.about.techStack') {
+                    techHeader.textContent = translation;
+                }
+            }
+            if (techContent) {
+                const translation = this.t('settings.about.tech');
+                if (translation !== 'settings.about.tech') {
+                    techContent.textContent = translation;
+                }
+            }
             
             // License
             const licenseHeader = aboutSections[3].querySelector('h4');
             const licenseContent = aboutSections[3].querySelector('p');
-            if (licenseHeader) licenseHeader.textContent = this.t('settings.about.license');
-            if (licenseContent) licenseContent.textContent = this.t('settings.about.licenseType');
+            if (licenseHeader && licenseHeader.textContent.trim() === '开源协议') {
+                const translation = this.t('settings.about.license');
+                if (translation !== 'settings.about.license') {
+                    licenseHeader.textContent = translation;
+                }
+            }
+            if (licenseContent) {
+                const translation = this.t('settings.about.licenseType');
+                if (translation !== 'settings.about.licenseType') {
+                    licenseContent.textContent = translation;
+                }
+            }
             
             // GitHub (keep as is)
             
             // Version header
             const versionHeader = aboutSections[5]?.querySelector('h4');
-            if (versionHeader) versionHeader.textContent = this.t('settings.about.version');
+            if (versionHeader && versionHeader.textContent.trim() === '版本') {
+                const translation = this.t('settings.about.version');
+                if (translation !== 'settings.about.version') {
+                    versionHeader.textContent = translation;
+                }
+            }
         }
     }
     
     translateAnnouncementContent() {
-        // Announcement section
-        const announcementTitle = document.querySelector('#announcement-settings h3');
-        if (announcementTitle) {
-            announcementTitle.textContent = this.t('settings.announcement.title');
+        // Announcement modal title
+        const announcementTitle = document.querySelector('#announcement-modal h2');
+        if (announcementTitle && announcementTitle.textContent.trim() === '公告') {
+            const translation = this.t('settings.announcement.title');
+            if (translation !== 'settings.announcement.title') {
+                announcementTitle.textContent = translation;
+            }
+        }
+        
+        // Announcement section title in settings
+        const settingsAnnouncementTitle = document.querySelector('#announcement-settings h3');
+        if (settingsAnnouncementTitle && settingsAnnouncementTitle.textContent.trim() === '公告') {
+            const translation = this.t('settings.announcement.title');
+            if (translation !== 'settings.announcement.title') {
+                settingsAnnouncementTitle.textContent = translation;
+            }
+        }
+        
+        // Announcement modal buttons
+        const announcementOkBtn = document.getElementById('announcement-ok-btn');
+        if (announcementOkBtn && announcementOkBtn.textContent.trim() === '确定') {
+            announcementOkBtn.textContent = this.t('common.ok');
+        }
+        
+        const announcementNoShowBtn = document.getElementById('announcement-no-show-btn');
+        if (announcementNoShowBtn && announcementNoShowBtn.textContent.trim() === '不再弹出') {
+            const translation = this.t('welcome.noShowAgain');
+            if (translation !== 'welcome.noShowAgain') {
+                announcementNoShowBtn.textContent = translation;
+            }
         }
     }
     
