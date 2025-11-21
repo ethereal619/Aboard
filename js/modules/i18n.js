@@ -338,17 +338,17 @@ class I18n {
             'english-lines': 'background.english4line',
             'music-staff': 'background.musicStaff',
             'coordinate': 'background.coordinate',
-            'image': 'background.image'
+            'image': 'background.upload'
         };
         
         document.querySelectorAll('.pattern-option-btn').forEach(btn => {
             const pattern = btn.getAttribute('data-pattern');
             if (pattern && patterns[pattern]) {
-                // For image button, keep the icon and translate the text
+                // For image button, keep the icon and translate the text in span
                 if (pattern === 'image') {
-                    const textNode = Array.from(btn.childNodes).find(node => node.nodeType === Node.TEXT_NODE);
-                    if (textNode) {
-                        textNode.textContent = this.t(patterns[pattern]);
+                    const uploadSpan = btn.querySelector('.upload-text');
+                    if (uploadSpan) {
+                        uploadSpan.textContent = this.t(patterns[pattern]);
                     }
                 } else {
                     btn.textContent = this.t(patterns[pattern]);
@@ -684,7 +684,7 @@ class I18n {
         
         // Translate display option buttons
         document.querySelectorAll('.display-option-btn').forEach(btn => {
-            const type = btn.getAttribute('data-td-display-type');
+            const type = btn.getAttribute('data-td-display-type') || btn.getAttribute('data-display-type');
             if (type === 'both') {
                 btn.textContent = this.t('timeDisplay.dateAndTime');
             } else if (type === 'date-only') {
@@ -696,7 +696,7 @@ class I18n {
         
         // Translate fullscreen mode buttons
         document.querySelectorAll('.fullscreen-mode-btn').forEach(btn => {
-            const mode = btn.getAttribute('data-td-mode');
+            const mode = btn.getAttribute('data-td-mode') || btn.getAttribute('data-mode');
             if (mode === 'disabled') {
                 btn.textContent = this.t('settings.time.fullscreenDisabled');
             } else if (mode === 'single') {
