@@ -21,6 +21,7 @@ class I18n {
         // Available languages
         this.availableLocales = {
             'zh-CN': '中文简体',
+            'zh-TW': '中文繁體',
             'en-US': 'English',
             'ja-JP': '日本語',
             'ko-KR': '한국어',
