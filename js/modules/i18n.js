@@ -689,6 +689,9 @@ class I18n {
             }
         });
         
+        // Translate select options (timezone, time format, date format)
+        this.translateSelectOptions();
+        
         // Translate color button titles in time display settings
         document.querySelectorAll('#time-display-settings-modal .color-btn').forEach(btn => {
             const colorValue = btn.getAttribute('data-td-time-color') || btn.getAttribute('data-td-time-bg-color');
@@ -722,6 +725,49 @@ class I18n {
         if (timerFullscreenLabel) {
             timerFullscreenLabel.textContent = this.t('timeDisplay.fullscreenSliderLabel');
         }
+    }
+    
+    translateSelectOptions() {
+        // Translate time format options
+        const timeFormatSelect = document.getElementById('td-time-format-select');
+        if (timeFormatSelect && this.currentLocale === 'en-US') {
+            timeFormatSelect.options[0].text = '12-hour (AM/PM)';
+            timeFormatSelect.options[1].text = '24-hour';
+        }
+        
+        // Translate date format options
+        const dateFormatSelect = document.getElementById('td-date-format-select');
+        if (dateFormatSelect && this.currentLocale === 'en-US') {
+            dateFormatSelect.options[0].text = 'Year-Month-Day (2024-01-01)';
+            dateFormatSelect.options[1].text = 'Month-Day-Year (01-01-2024)';
+            dateFormatSelect.options[2].text = 'Day-Month-Year (01-01-2024)';
+            dateFormatSelect.options[3].text = 'Chinese (2024年1月1日)';
+        }
+        
+        // Translate timezone options
+        const timezoneSelect = document.getElementById('td-timezone-select');
+        if (timezoneSelect && this.currentLocale === 'en-US') {
+            timezoneSelect.options[0].text = 'China (UTC+8)';
+            timezoneSelect.options[1].text = 'New York (UTC-5/-4)';
+            timezoneSelect.options[2].text = 'Los Angeles (UTC-8/-7)';
+            timezoneSelect.options[3].text = 'Chicago (UTC-6/-5)';
+            timezoneSelect.options[4].text = 'London (UTC+0/+1)';
+            timezoneSelect.options[5].text = 'Paris (UTC+1/+2)';
+            timezoneSelect.options[6].text = 'Berlin (UTC+1/+2)';
+            timezoneSelect.options[7].text = 'Tokyo (UTC+9)';
+            timezoneSelect.options[8].text = 'Seoul (UTC+9)';
+            timezoneSelect.options[9].text = 'Hong Kong (UTC+8)';
+            timezoneSelect.options[10].text = 'Singapore (UTC+8)';
+            timezoneSelect.options[11].text = 'Dubai (UTC+4)';
+            timezoneSelect.options[12].text = 'Sydney (UTC+10/+11)';
+            timezoneSelect.options[13].text = 'Auckland (UTC+12/+13)';
+            timezoneSelect.options[14].text = 'UTC (Coordinated Universal Time)';
+        }
+        
+        // Translate "Custom Color" labels
+        document.querySelectorAll('.color-picker-icon-btn[title="自定义颜色"]').forEach(btn => {
+            btn.title = this.t('timeDisplay.customColor');
+        });
     }
     
     translateTimerSettings() {
