@@ -56,7 +56,10 @@ window.translations = {
             fountain: '万年筆',
             brush: 'ブラシ',
             colorAndSize: '色とサイズ',
-            colorPicker: 'カラーピッカー'
+            colorPicker: 'カラーピッカー',
+            size: 'サイズ',
+            sizeLabel: 'サイズ：現在',
+            sizePx: 'px'
         },
         eraser: {
             title: '消しゴム',
@@ -64,6 +67,8 @@ window.translations = {
             normal: '通常消しゴム',
             pixel: 'ピクセル消しゴム',
             size: '消しゴムのサイズ',
+            sizeLabel: '消しゴムのサイズ：現在',
+            shape: '形状',
             shapeCircle: '円形',
             shapeRectangle: '四角形'
         },
@@ -89,11 +94,18 @@ window.translations = {
         musicStaff: '五線譜',
         coordinate: '座標系',
         image: '画像',
+        density: '密度',
+        densityLabel: '密度：現在',
+        size: 'サイズ',
+        sizeLabel: 'サイズ：現在',
         opacity: '背景の不透明度',
+        opacityLabel: '背景不透明度：現在',
         opacityHint: '背景の透明度を調整します。100%は完全に不透明',
         contrast: 'コントラスト',
+        contrastLabel: 'パターン透明度：現在',
         contrastHint: '背景パターン線の明暗を調整します',
-        preference: '背景パターンの設定'
+        preference: '背景パターンの設定',
+        upload: 'アップロード'
     },
 
     // Page Navigation
@@ -313,12 +325,15 @@ window.translations = {
     // Feature Area
     features: {
         title: '機能',
+        moreFeatures: 'その他の機能',
         time: '時刻',
         timer: 'タイマー'
     },
 
     // Time Display
     timeDisplay: {
+        title: '時刻表示',
+        settingsTitle: '時刻表示設定',
         options: '時刻表示オプション',
         showDate: '日付を表示',
         showTime: '時刻を表示',
@@ -326,13 +341,36 @@ window.translations = {
         displayOptions: '表示オプション',
         dateAndTime: '日付と時刻',
         dateOnly: '日付のみ',
-        timeOnly: '時刻のみ'
+        timeOnly: '時刻のみ',
+        timezone: 'タイムゾーン',
+        timezoneHint: '表示するタイムゾーンを選択',
+        timeFormat: '時刻形式',
+        timeFormatHint: '時刻の表示形式を選択',
+        dateFormat: '日付形式',
+        dateFormatHint: '日付の表示形式を選択',
+        colorSettings: '色設定',
+        colorSettingsHint: '時刻表示のフォントと背景色を設定',
+        textColor: 'テキスト色',
+        bgColor: '背景色',
+        fontSize: 'フォントサイズ',
+        fontSizeHint: '時刻表示のフォントサイズを調整',
+        fontSizeLabel: 'フォントサイズ：現在',
+        opacity: '不透明度',
+        opacityLabel: '不透明度：現在',
+        fullscreenMode: 'フルスクリーンモード',
+        fullscreenModeHint: '時刻をフルスクリーン表示するトリガーを選択',
+        fullscreenFontSize: 'フルスクリーンフォントサイズ',
+        fullscreenFontSizeLabel: 'フルスクリーンフォントサイズ：現在',
+        fullscreenSliderLabel: 'フォントサイズ調整 (10%-85%)',
+        customColor: 'カスタムカラー',
+        transparent: '透明'
     },
 
     // Timer
     timer: {
-        title: 'タイマー設定',
+        settingsTitle: 'タイマー設定',
         mode: 'モード',
+        selectMode: 'モードを選択',
         countdown: 'カウントダウン',
         stopwatch: 'ストップウォッチ',
         duration: '期間（分）',
@@ -341,12 +379,30 @@ window.translations = {
         seconds: '秒',
         title: 'タイトル',
         titlePlaceholder: 'タイマーのタイトルを入力',
+        setTime: '時刻設定',
+        setStartTime: '開始時刻設定',
         fontSettings: 'フォント設定',
         fontSize: 'フォントサイズ',
+        fontSizeLabel: 'フォントサイズ：現在',
         adjustColor: '色を調整',
         colorSettings: '色設定',
         textColor: 'テキスト色',
         bgColor: '背景色',
+        opacity: '不透明度',
+        opacityLabel: '不透明度：現在',
+        fullscreenFontSize: 'フルスクリーンフォントサイズ',
+        fullscreenFontSizeLabel: 'フルスクリーンフォントサイズ：現在',
+        soundSettings: 'サウンド設定',
+        playSound: 'カウントダウン終了時にアラート音を再生',
+        loopPlayback: 'ループ再生',
+        loopCount: 'ループ回数',
+        uploadCustomAudio: 'カスタムオーディオをアップロード',
+        soundPresets: {
+            classBell: 'クラスベル (10秒)',
+            digitalBeep: 'デジタルビープ (3秒)',
+            gentle: 'ジェントル (5秒)',
+            examEnd: '試験終了 (8秒)'
+        },
         colors: {
             black: '黒',
             white: '白',
@@ -414,7 +470,15 @@ window.translations = {
         orange: 'オレンジ',
         purple: '紫',
         white: '白',
-        transparent: '透明'
+        transparent: '透明',
+        lightGray: '薄いグレー',
+        darkGray: '濃いグレー',
+        lightBlue: '薄い青',
+        lightRed: '薄い赤',
+        lightGreen: '薄い緑',
+        lightYellow: '薄い黄',
+        lightOrange: '薄いオレンジ',
+        whiteDefault: '白（デフォルト）'
     },
 
     // Days of week
