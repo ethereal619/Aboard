@@ -49,11 +49,11 @@ window.translations = {
     tools: {
         pen: {
             title: '筆',
-            type: '筆触类型',
+            type: '筆触類型',
             normal: '普通筆',
-            pencil: '铅筆',
-            ballpoint: '圆珠筆',
-            fountain: '钢筆',
+            pencil: '鉛筆',
+            ballpoint: '圓珠筆',
+            fountain: '鋼筆',
             brush: '毛筆',
             colorAndSize: '顏色与粗细',
             colorPicker: '取色器',
@@ -63,13 +63,13 @@ window.translations = {
         },
         eraser: {
             title: '橡皮',
-            type: '橡皮类型',
+            type: '橡皮類型',
             normal: '普通橡皮',
             pixel: '像素橡皮',
             size: '橡皮大小',
             sizeLabel: '橡皮擦大小：目前',
             shape: '形状',
-            shapeCircle: '圆形',
+            shapeCircle: '圓形',
             shapeRectangle: '方形'
         },
         clear: {
@@ -101,7 +101,7 @@ window.translations = {
         opacity: '背景透明度',
         opacityLabel: '背景透明度：目前',
         opacityHint: '調整背景的透明度,100%为完全不透明',
-        contrast: '对比度',
+        contrast: '對比度',
         contrastLabel: '圖案透明度：目前',
         contrastHint: '調整背景圖案線條的明暗程度',
         preference: '背景圖案偏好',
@@ -251,9 +251,9 @@ window.translations = {
         },
         announcement: {
             title: '公告',
-            welcome: '欢迎使用 Aboard！',
+            welcome: '歡迎使用 Aboard！',
             content: [
-                '欢迎使用 Aboard 白板套用！',
+                '歡迎使用 Aboard 白板套用！',
                 '',
                 '使用提示：',
                 '• 点击底部工具栏選擇不同工具進行绘画',
@@ -277,8 +277,8 @@ window.translations = {
             description2: '它提供了流畅的繪圖体验和丰富的背景選項，让您的创意自由展现。',
             mainFeatures: '主要功能',
             features: {
-                penTypes: '多种筆触类型（普通筆、铅筆、圆珠筆、钢筆、毛筆）',
-                smartEraser: '智能橡皮擦（支持圆形和方形）',
+                penTypes: '多种筆触類型（普通筆、鉛筆、圓珠筆、鋼筆、毛筆）',
+                smartEraser: '智能橡皮擦（支持圓形和方形）',
                 richPatterns: '丰富的背景圖案（点阵、方格、田字格、英语四线格等）',
                 adjustable: '可調节的圖案密度和透明度',
                 canvasModes: '無限畫布和分頁模式（支持A4、A3、B5等预设尺寸）',
@@ -387,7 +387,7 @@ window.translations = {
         minutes: '分钟',
         seconds: '秒',
         title: '計時器標题（可選）',
-        titlePlaceholder: '例如：课堂演讲、考试時間等',
+        titlePlaceholder: '例如：课堂演讲、考試時間等',
         setTime: '設置時間',
         setStartTime: '設置开始時間',
         fontSettings: '字体設置',
@@ -408,7 +408,7 @@ window.translations = {
         uploadCustomAudio: '上传自定义音频',
         soundPresets: {
             classBell: '开始铃声(10s)',
-            examEnd: '考试结束(4s)',
+            examEnd: '考試结束(4s)',
             gentle: '柔和(17s)',
             digitalBeep: '结束铃声(4s)'
         },
@@ -434,7 +434,7 @@ window.translations = {
         customColor: '自定义顏色',
         start: '开始',
         adjust: '調整',
-        continue: '继续',
+        continue: '繼續',
         pause: '暂停',
         reset: '重置',
         stop: '停止'
@@ -461,8 +461,8 @@ window.translations = {
 
     // Welcome Dialog
     welcome: {
-        title: '欢迎使用 Aboard',
-        content: `欢迎使用 Aboard 白板套用！
+        title: '歡迎使用 Aboard',
+        content: `歡迎使用 Aboard 白板套用！
 
 使用提示：
 • 点击底部工具栏選擇不同工具進行绘画

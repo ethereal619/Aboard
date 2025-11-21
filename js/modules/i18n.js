@@ -817,9 +817,12 @@ class I18n {
             timezoneSelectMore.options[14].text = this.t('timezones.utc');
         }
         
-        // Translate "Custom Color" labels
-        document.querySelectorAll('.color-picker-icon-btn[title="自定义颜色"], .color-picker-icon-btn[title="取色器"]').forEach(btn => {
-            btn.title = this.t('timeDisplay.customColor');
+        // Translate "Custom Color" labels for all color picker icon buttons
+        document.querySelectorAll('.color-picker-icon-btn').forEach(btn => {
+            // Only update if it's actually a color picker button with a title attribute
+            if (btn.hasAttribute('title')) {
+                btn.title = this.t('timeDisplay.customColor');
+            }
         });
         
         // Update label format for font sizes and opacity - "字体大小：当前 16px"
