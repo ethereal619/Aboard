@@ -73,8 +73,8 @@ class DrawingBoard {
         this.updateUI();
         this.historyManager.saveState();
         
-        // Initialize pages array for pagination mode
-        if (!this.settingsManager.infiniteCanvas && this.pages.length === 0) {
+        // Initialize pages array for pagination mode (always on)
+        if (this.pages.length === 0) {
             this.pages.push(this.ctx.getImageData(0, 0, this.canvas.width, this.canvas.height));
             this.currentPage = 1;
             this.updatePaginationUI();
@@ -1476,23 +1476,9 @@ class DrawingBoard {
         document.getElementById('undo-btn').disabled = !this.historyManager.canUndo();
         document.getElementById('redo-btn').disabled = !this.historyManager.canRedo();
         
+        // Always show pagination controls since we're always in pagination mode
         const paginationControls = document.getElementById('pagination-controls');
-        if (!this.settingsManager.infiniteCanvas) {
-            paginationControls.classList.add('show');
-        } else {
-            paginationControls.classList.remove('show');
-        }
-    }
-    
-    updateCanvasMode() {
-        this.updateUI();
-        this.applyCanvasSize();
-        // Initialize pages array if needed
-        if (!this.settingsManager.infiniteCanvas && this.pages.length === 0) {
-            this.pages.push(this.ctx.getImageData(0, 0, this.canvas.width, this.canvas.height));
-            this.currentPage = 1;
-            this.updatePaginationUI();
-        }
+        paginationControls.classList.add('show');
     }
     
     applyCanvasSize() {
@@ -1781,7 +1767,7 @@ class DrawingBoard {
     
     // Pagination methods
     addPage() {
-        if (this.settingsManager.infiniteCanvas) return;
+        // Always in pagination mode, no need to check
         
         // Save current page
         this.pages[this.currentPage - 1] = this.ctx.getImageData(0, 0, this.canvas.width, this.canvas.height);
@@ -1797,13 +1783,11 @@ class DrawingBoard {
         this.updatePaginationUI();
     }
     prevPage() {
-        if (this.settingsManager.infiniteCanvas || this.currentPage <= 1) return;
+        if (this.currentPage <= 1) return;
         
         // Save current page and background
         this.pages[this.currentPage - 1] = this.ctx.getImageData(0, 0, this.canvas.width, this.canvas.height);
-        if (!this.settingsManager.infiniteCanvas) {
-            this.savePageBackground(this.currentPage);
-        }
+        this.savePageBackground(this.currentPage);
         
         // Go to previous page
         this.currentPage--;
@@ -1812,13 +1796,9 @@ class DrawingBoard {
     }
     
     nextPage() {
-        if (this.settingsManager.infiniteCanvas) return;
-        
         // Save current page and background
         this.pages[this.currentPage - 1] = this.ctx.getImageData(0, 0, this.canvas.width, this.canvas.height);
-        if (!this.settingsManager.infiniteCanvas) {
-            this.savePageBackground(this.currentPage);
-        }
+        this.savePageBackground(this.currentPage);
         
         // Go to next page (create new if needed)
         this.currentPage++;
@@ -1833,13 +1813,9 @@ class DrawingBoard {
     }
     
     nextOrAddPage() {
-        if (this.settingsManager.infiniteCanvas) return;
-        
         // Save current page and background
         this.pages[this.currentPage - 1] = this.ctx.getImageData(0, 0, this.canvas.width, this.canvas.height);
-        if (!this.settingsManager.infiniteCanvas) {
-            this.savePageBackground(this.currentPage);
-        }
+        this.savePageBackground(this.currentPage);
         
         // Check if we're on the last page
         if (this.currentPage >= this.pages.length) {
@@ -1858,16 +1834,14 @@ class DrawingBoard {
     }
     
     goToPage(pageNumber) {
-        if (this.settingsManager.infiniteCanvas || pageNumber < 1 || pageNumber === this.currentPage) {
+        if (pageNumber < 1 || pageNumber === this.currentPage) {
             this.updatePaginationUI();
             return;
         }
         
         // Save current page and background
         this.pages[this.currentPage - 1] = this.ctx.getImageData(0, 0, this.canvas.width, this.canvas.height);
-        if (!this.settingsManager.infiniteCanvas) {
-            this.savePageBackground(this.currentPage);
-        }
+        this.savePageBackground(this.currentPage);
         
         // Create new pages if needed
         while (pageNumber > this.pages.length) {
