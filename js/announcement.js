@@ -64,10 +64,15 @@ class AnnouncementManager {
         // Set title and content from i18n
         this.titleElement.textContent = window.i18n.t('settings.announcement.title');
         
-        // Get content array from i18n and join with newlines
+        // Get content array from i18n and convert links to clickable
         const content = window.i18n.t('settings.announcement.content');
         if (Array.isArray(content)) {
-            this.contentElement.textContent = content.join('\n');
+            // Convert links to HTML anchor tags
+            const htmlContent = content.map(line => {
+                // Match URLs in the text
+                return line.replace(/(https?:\/\/[^\s]+)/g, '<a href="$1" target="_blank" rel="noopener noreferrer">$1</a>');
+            }).join('<br>');
+            this.contentElement.innerHTML = htmlContent;
         } else {
             this.contentElement.textContent = content;
         }
@@ -87,7 +92,12 @@ class AnnouncementManager {
         if (settingsContent) {
             const content = window.i18n.t('settings.announcement.content');
             if (Array.isArray(content)) {
-                settingsContent.textContent = content.join('\n');
+                // Convert links to HTML anchor tags
+                const htmlContent = content.map(line => {
+                    // Match URLs in the text
+                    return line.replace(/(https?:\/\/[^\s]+)/g, '<a href="$1" target="_blank" rel="noopener noreferrer" style="color: #007AFF; text-decoration: none;">$1</a>');
+                }).join('<br>');
+                settingsContent.innerHTML = htmlContent;
             } else {
                 settingsContent.textContent = content;
             }

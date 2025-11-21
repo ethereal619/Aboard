@@ -888,6 +888,91 @@ class I18n {
             timeInputFields[2].textContent = this.t('timer.seconds');
         }
         
+        // Adjust Color checkbox label
+        const adjustColorLabel = document.querySelector('label[for="timer-color-checkbox"]');
+        if (adjustColorLabel) {
+            adjustColorLabel.textContent = this.t('timer.adjustColor');
+        }
+        
+        // Font color and background color labels in timer color settings
+        const timerColorLabels = document.querySelectorAll('.timer-color-item > label');
+        if (timerColorLabels.length >= 2) {
+            timerColorLabels[0].textContent = this.t('timer.textColor');
+            timerColorLabels[1].textContent = this.t('timer.bgColor');
+        }
+        
+        // Sound settings checkbox label
+        const soundCheckboxLabel = document.querySelector('label[for="timer-sound-checkbox"]');
+        if (soundCheckboxLabel) {
+            soundCheckboxLabel.textContent = this.t('timer.playSound');
+        }
+        
+        // Sound preset buttons
+        document.querySelectorAll('.sound-preset-btn').forEach(btn => {
+            const soundType = btn.getAttribute('data-sound');
+            if (soundType === 'class-bell') {
+                btn.textContent = this.t('timer.soundPresets.classBell');
+            } else if (soundType === 'exam-end') {
+                btn.textContent = this.t('timer.soundPresets.examEnd');
+            } else if (soundType === 'gentle-alarm') {
+                btn.textContent = this.t('timer.soundPresets.gentle');
+            } else if (soundType === 'digital-beep') {
+                btn.textContent = this.t('timer.soundPresets.digitalBeep');
+            }
+        });
+        
+        // Loop playback checkbox label
+        const loopCheckboxLabel = document.querySelector('label[for="timer-loop-checkbox"]');
+        if (loopCheckboxLabel) {
+            loopCheckboxLabel.textContent = this.t('timer.loopPlayback');
+        }
+        
+        // Loop count label
+        const loopCountLabel = document.querySelector('label[for="timer-loop-count"]');
+        if (loopCountLabel) {
+            loopCountLabel.textContent = this.t('timer.loopCount');
+        }
+        
+        // Upload custom audio button
+        const uploadAudioLabel = document.querySelector('label[for="timer-sound-upload"]');
+        if (uploadAudioLabel) {
+            const textNode = Array.from(uploadAudioLabel.childNodes).find(node => node.nodeType === Node.TEXT_NODE);
+            if (textNode) {
+                textNode.textContent = '\n                                ' + this.t('timer.uploadCustomAudio') + '\n                            ';
+            }
+        }
+        
+        // Timer color button titles
+        document.querySelectorAll('#timer-settings-modal .color-btn').forEach(btn => {
+            const colorValue = btn.getAttribute('data-timer-text-color') || btn.getAttribute('data-timer-bg-color');
+            if (colorValue) {
+                const colorMap = {
+                    '#333333': 'timer.colors.darkGray',
+                    '#000000': 'timer.colors.black',
+                    '#FFFFFF': 'timer.colors.whiteDefault',
+                    '#FF0000': 'timer.colors.red',
+                    '#0000FF': 'timer.colors.blue',
+                    '#00FF00': 'timer.colors.green',
+                    '#FFFF00': 'timer.colors.yellow',
+                    '#FF8800': 'timer.colors.orange',
+                    '#F0F0F0': 'timer.colors.lightGray',
+                    '#FFE5E5': 'timer.colors.lightRed',
+                    '#E5F0FF': 'timer.colors.lightBlue',
+                    '#E5FFE5': 'timer.colors.lightGreen',
+                    '#FFFFE5': 'timer.colors.lightYellow',
+                    '#FFE5CC': 'timer.colors.lightOrange'
+                };
+                if (colorMap[colorValue]) {
+                    btn.title = this.t(colorMap[colorValue]);
+                }
+            }
+        });
+        
+        // Timer custom color picker title
+        document.querySelectorAll('.timer-color-picker-icon').forEach(icon => {
+            icon.title = this.t('timer.customColor');
+        });
+        
         // Timer fullscreen close button
         const timerFullscreenClose = document.getElementById('timer-fullscreen-close-btn');
         if (timerFullscreenClose) {

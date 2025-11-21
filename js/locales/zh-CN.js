@@ -228,7 +228,9 @@ window.translations = {
                 '• 在设置中可以切换无限画布或分页模式',
                 '• 支持触控和鼠标操作',
                 '',
-                'GitHub 项目：https://github.com/lifeafter619/Aboard',
+                '链接：',
+                '• GitHub 项目：https://github.com/lifeafter619/Aboard',
+                '• 作者博客：https://66619.eu.org',
                 '',
                 '祝您使用愉快！'
             ]
@@ -352,6 +354,7 @@ window.translations = {
         title: '计时器标题（可选）',
         titlePlaceholder: '例如：课堂演讲、考试时间等',
         setTime: '设置时间',
+        setStartTime: '设置开始时间',
         fontSettings: '字体设置',
         fontSize: '字体大小',
         fontSizeLabel: '字体大小：当前',
@@ -363,6 +366,17 @@ window.translations = {
         opacityLabel: '透明度：当前',
         fullscreenFontSize: '全屏字体大小',
         fullscreenFontSizeLabel: '全屏字体大小：当前',
+        soundSettings: '声音设置',
+        playSound: '倒计时结束时播放提示音',
+        loopPlayback: '循环播放',
+        loopCount: '循环次数',
+        uploadCustomAudio: '上传自定义音频',
+        soundPresets: {
+            classBell: '开始铃声(10s)',
+            examEnd: '考试结束(4s)',
+            gentle: '柔和(17s)',
+            digitalBeep: '结束铃声(4s)'
+        },
         colors: {
             black: '黑色',
             white: '白色',
@@ -372,7 +386,15 @@ window.translations = {
             yellow: '黄色',
             orange: '橙色',
             purple: '紫色',
-            transparent: '透明'
+            transparent: '透明',
+            darkGray: '深灰（默认）',
+            lightGray: '浅灰',
+            lightRed: '浅红',
+            lightBlue: '浅蓝',
+            lightGreen: '浅绿',
+            lightYellow: '浅黄',
+            lightOrange: '浅橙',
+            whiteDefault: '白色（默认）'
         },
         customColor: '自定义颜色',
         start: '开始',

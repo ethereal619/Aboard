@@ -228,7 +228,9 @@ window.translations = {
                 '• Switch between infinite canvas or pagination mode in Settings',
                 '• Supports both touch and mouse operations',
                 '',
-                'GitHub Project: https://github.com/lifeafter619/Aboard',
+                'Links:',
+                '• GitHub Project: https://github.com/lifeafter619/Aboard',
+                '• Author\'s Blog: https://66619.eu.org',
                 '',
                 'Enjoy your creative journey!'
             ]
@@ -352,6 +354,7 @@ window.translations = {
         title: 'Timer Title (Optional)',
         titlePlaceholder: 'e.g.: Classroom Speech, Exam Time, etc.',
         setTime: 'Set Time',
+        setStartTime: 'Set Start Time',
         fontSettings: 'Font Settings',
         fontSize: 'Font Size',
         fontSizeLabel: 'Font Size: Current',
@@ -363,6 +366,17 @@ window.translations = {
         opacityLabel: 'Opacity: Current',
         fullscreenFontSize: 'Fullscreen Font Size',
         fullscreenFontSizeLabel: 'Fullscreen Font Size: Current',
+        soundSettings: 'Sound Settings',
+        playSound: 'Play alert sound when countdown ends',
+        loopPlayback: 'Loop Playback',
+        loopCount: 'Loop Count',
+        uploadCustomAudio: 'Upload Custom Audio',
+        soundPresets: {
+            classBell: 'Class Bell (10s)',
+            examEnd: 'Exam End (4s)',
+            gentle: 'Gentle (17s)',
+            digitalBeep: 'End Beep (4s)'
+        },
         colors: {
             black: 'Black',
             white: 'White',
@@ -372,7 +386,15 @@ window.translations = {
             yellow: 'Yellow',
             orange: 'Orange',
             purple: 'Purple',
-            transparent: 'Transparent'
+            transparent: 'Transparent',
+            darkGray: 'Dark Gray (Default)',
+            lightGray: 'Light Gray',
+            lightRed: 'Light Red',
+            lightBlue: 'Light Blue',
+            lightGreen: 'Light Green',
+            lightYellow: 'Light Yellow',
+            lightOrange: 'Light Orange',
+            whiteDefault: 'White (Default)'
         },
         customColor: 'Custom Color',
         start: 'Start',
