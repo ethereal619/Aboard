@@ -336,13 +336,22 @@ class I18n {
             'tianzige': 'background.tianzige',
             'english-lines': 'background.english4line',
             'music-staff': 'background.musicStaff',
-            'coordinate': 'background.coordinate'
+            'coordinate': 'background.coordinate',
+            'image': 'background.image'
         };
         
         document.querySelectorAll('.pattern-option-btn').forEach(btn => {
             const pattern = btn.getAttribute('data-pattern');
             if (pattern && patterns[pattern]) {
-                btn.textContent = this.t(patterns[pattern]);
+                // For image button, keep the icon and translate the text
+                if (pattern === 'image') {
+                    const textNode = Array.from(btn.childNodes).find(node => node.nodeType === Node.TEXT_NODE);
+                    if (textNode) {
+                        textNode.textContent = this.t(patterns[pattern]);
+                    }
+                } else {
+                    btn.textContent = this.t(patterns[pattern]);
+                }
             }
         });
         
