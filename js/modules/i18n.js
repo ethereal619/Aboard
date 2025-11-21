@@ -1059,7 +1059,7 @@ class I18n {
                 if (index < featureKeys.length) {
                     const translation = this.t(`settings.about.features.${featureKeys[index]}`);
                     if (translation && translation !== `settings.about.features.${featureKeys[index]}`) {
-                        item.textContent = '• ' + translation;
+                        item.textContent = translation; // Don't add bullet, CSS handles it
                     }
                 }
             });
