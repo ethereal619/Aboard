@@ -819,7 +819,7 @@ class I18n {
         
         // Translate "Custom Color" labels
         document.querySelectorAll('.color-picker-icon-btn[title="自定义颜色"], .color-picker-icon-btn[title="取色器"]').forEach(btn => {
-            btn.title = this.t('settings.time.customColor');
+            btn.title = this.t('timeDisplay.customColor');
         });
         
         // Update label format for font sizes and opacity - "字体大小：当前 16px"

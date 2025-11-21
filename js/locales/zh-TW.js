@@ -32,17 +32,17 @@ window.translations = {
         undo: '撤銷',
         redo: '重做',
         pen: '筆',
-        move: '移动',
+        move: '移動',
         eraser: '橡皮',
         clear: '清空',
         background: '背景',
         more: '更多',
         settings: '設置',
         export: '匯出畫布',
-        zoomOut: '缩小 (-)',
+        zoomOut: '縮小 (-)',
         zoomIn: '放大 (+)',
-        fullscreen: '全屏 (F11)',
-        zoomPlaceholder: '縮放比例 (输入百分比)'
+        fullscreen: '全螢幕 (F11)',
+        zoomPlaceholder: '縮放比例 (輸入百分比)'
     },
 
     // Tools
@@ -92,7 +92,7 @@ window.translations = {
         tianzige: '田字格',
         english4line: '英语四线格',
         musicStaff: '五线谱',
-        coordinate: '坐标系',
+        coordinate: '坐標系',
         image: '上传圖片',
         density: '密度',
         densityLabel: '密度：目前',
@@ -100,10 +100,10 @@ window.translations = {
         sizeLabel: '大小：目前',
         opacity: '背景透明度',
         opacityLabel: '背景透明度：目前',
-        opacityHint: '调整背景的透明度,100%为完全不透明',
+        opacityHint: '調整背景的透明度,100%为完全不透明',
         contrast: '对比度',
         contrastLabel: '圖案透明度：目前',
-        contrastHint: '调整背景圖案線條的明暗程度',
+        contrastHint: '調整背景圖案線條的明暗程度',
         preference: '背景圖案偏好',
         preferenceHint: '選擇在属性栏中顯示的圖案',
         upload: '上传'
@@ -113,7 +113,7 @@ window.translations = {
     page: {
         previous: '上一頁',
         next: '下一頁',
-        jumpPlaceholder: '输入頁码跳转',
+        jumpPlaceholder: '輸入頁码跳转',
         of: ' / ',
         newPage: '新建頁面'
     },
@@ -128,7 +128,7 @@ window.translations = {
             eraser: '橡皮',
             canvas: '畫布',
             background: '背景',
-            about: '关于',
+            about: '關於',
             announcement: '公告',
             more: '更多'
         },
@@ -138,16 +138,16 @@ window.translations = {
             themeHint: '選擇套用主题',
             themeColor: '主题色',
             showZoomControls: '顯示縮放控件',
-            showZoomControlsHint: '勾选后，在畫布上方顯示縮放控件',
-            showFullscreenBtn: '顯示全屏按钮',
-            showFullscreenBtnHint: '勾选后，在縮放控件旁顯示全屏按钮',
+            showZoomControlsHint: '勾選后，在畫布上方顯示縮放控件',
+            showFullscreenBtn: '顯示全螢幕按钮',
+            showFullscreenBtnHint: '勾選后，在縮放控件旁顯示全螢幕按钮',
             toolbarSize: '工具栏大小',
             toolbarSizeLabel: '工具栏大小：目前',
-            toolbarSizeHint: '调整底部工具栏的大小',
+            toolbarSizeHint: '調整底部工具栏的大小',
             configScale: '属性栏大小',
             configScaleLabel: '属性栏大小：目前',
-            configScaleHint: '调整弹出具体属性面板的大小',
-            themeColorHint: '工具栏被选中时的顏色',
+            configScaleHint: '調整弹出具体属性面板的大小',
+            themeColorHint: '工具栏被選中时的顏色',
             colorOptions: {
                 blue: '蓝色',
                 purple: '紫色',
@@ -167,7 +167,7 @@ window.translations = {
             globalFont: '全局字体',
             globalFontHint: '選擇套用程序使用的字体',
             fonts: {
-                system: '系统默认',
+                system: '系统預設',
                 serif: '宋体（衬线体）',
                 sansSerif: '黑体（无衬线体）',
                 monospace: '等宽字体',
@@ -188,7 +188,7 @@ window.translations = {
                 trebuchet: 'Trebuchet MS',
                 impact: 'Impact'
             },
-            edgeSnap: '启用边缘吸附',
+            edgeSnap: '啟用边缘吸附',
             edgeSnapHint: '拖动控制面板时自动吸附到屏幕边缘',
             controlPosition: '控制按钮位置',
             controlPositionHint: '選擇縮放和分頁控件在屏幕上的顯示位置',
@@ -219,7 +219,7 @@ window.translations = {
                 b5Portrait: 'B5 竖向',
                 b5Landscape: 'B5 横向',
                 widescreen: '16:9 宽屏',
-                standard: '4:3 标准',
+                standard: '4:3 標准',
                 custom: '自定义'
             },
             customSize: {
@@ -242,10 +242,10 @@ window.translations = {
             title: '背景設置',
             opacity: '背景透明度',
             opacityLabel: '背景透明度：目前',
-            opacityHint: '调整背景的透明度,100%为完全不透明',
+            opacityHint: '調整背景的透明度,100%为完全不透明',
             patternIntensity: '圖案透明度',
             patternIntensityLabel: '圖案透明度：目前',
-            patternIntensityHint: '调整背景圖案線條的明暗程度',
+            patternIntensityHint: '調整背景圖案線條的明暗程度',
             preference: '背景圖案偏好',
             preferenceHint: '選擇在属性栏中顯示的圖案'
         },
@@ -256,37 +256,37 @@ window.translations = {
                 '欢迎使用 Aboard 白板套用！',
                 '',
                 '使用提示：',
-                '• 点击底部工具栏選擇不同工具进行绘画',
+                '• 点击底部工具栏選擇不同工具進行绘画',
                 '• 使用 Ctrl+Z 撤銷，Ctrl+Y 重做',
-                '• 点击右上角縮放按钮或使用鼠标滚轮縮放畫布',
+                '• 点击右上角縮放按钮或使用鼠標滚轮縮放畫布',
                 '• 点击背景按钮可以選擇不同的背景圖案',
                 '• 在設置中可以切换無限畫布或分頁模式',
-                '• 支持触控和鼠标操作',
+                '• 支持触控和鼠標操作',
                 '',
                 '链接：',
-                '• GitHub 项目：https://github.com/lifeafter619/Aboard',
+                '• GitHub 項目：https://github.com/lifeafter619/Aboard',
                 '• 作者博客：https://66619.eu.org',
                 '',
                 '祝您使用愉快！'
             ]
         },
         about: {
-            title: '关于 Aboard',
-            projectIntro: '项目简介',
+            title: '關於 Aboard',
+            projectIntro: '項目简介',
             description1: 'Aboard 是一个簡約的网頁白板套用，专为教学和演示设计。',
-            description2: '它提供了流畅的繪圖体验和丰富的背景选项，让您的创意自由展现。',
+            description2: '它提供了流畅的繪圖体验和丰富的背景選項，让您的创意自由展现。',
             mainFeatures: '主要功能',
             features: {
                 penTypes: '多种筆触类型（普通筆、铅筆、圆珠筆、钢筆、毛筆）',
                 smartEraser: '智能橡皮擦（支持圆形和方形）',
                 richPatterns: '丰富的背景圖案（点阵、方格、田字格、英语四线格等）',
-                adjustable: '可调节的圖案密度和透明度',
+                adjustable: '可調节的圖案密度和透明度',
                 canvasModes: '無限畫布和分頁模式（支持A4、A3、B5等预设尺寸）',
                 customSize: '自定义畫布尺寸和比例',
                 draggable: '可拖动的工具栏和属性面板（支持垂直布局）',
                 undoRedo: '撤銷/重做功能（支持最多50步）',
-                smartZoom: '智能縮放（Ctrl+滚轮，縮放至鼠标位置）',
-                responsive: '响应式界面，适配不同屏幕尺寸'
+                smartZoom: '智能縮放（Ctrl+滚轮，縮放至鼠標位置）',
+                responsive: '响應式界面，適配不同屏幕尺寸'
             },
             techStack: '技术栈',
             tech: 'HTML5 Canvas • Vanilla JavaScript • CSS3',
@@ -322,18 +322,18 @@ window.translations = {
             textColor: '字体顏色',
             bgColor: '背景顏色',
             fontSize: '字体大小',
-            fontSizeHint: '调整時間顯示的字体大小',
+            fontSizeHint: '調整時間顯示的字体大小',
             opacity: '透明度',
-            opacityHint: '调整時間顯示的透明度',
-            fullscreenMode: '全屏模式',
-            fullscreenModeHint: '選擇如何触发時間全屏顯示',
+            opacityHint: '調整時間顯示的透明度',
+            fullscreenMode: '全螢幕模式',
+            fullscreenModeHint: '選擇如何触发時間全螢幕顯示',
             fullscreenDisabled: '關閉',
             fullscreenSingle: '單擊',
             fullscreenDouble: '雙擊',
-            fullscreenFontSize: '全屏字体大小',
-            fullscreenFontSizeHint: '调整全屏時間顯示的字体大小，范围10%-85%',
+            fullscreenFontSize: '全螢幕字体大小',
+            fullscreenFontSizeHint: '調整全螢幕時間顯示的字体大小，范围10%-85%',
             customColor: '自定义顏色',
-            displayOptions: '顯示选项'
+            displayOptions: '顯示選項'
         }
     },
 
@@ -349,11 +349,11 @@ window.translations = {
     timeDisplay: {
         title: '時間顯示',
         settingsTitle: '時間顯示設置',
-        options: '時間顯示选项',
+        options: '時間顯示選項',
         showDate: '顯示日期',
         showTime: '顯示時間',
         settings: '設置',
-        displayOptions: '顯示选项',
+        displayOptions: '顯示選項',
         dateAndTime: '日期和時間',
         dateOnly: '仅日期',
         timeOnly: '仅時間',
@@ -367,10 +367,10 @@ window.translations = {
         fontSizeLabel: '字体大小：目前',
         opacity: '透明度',
         opacityLabel: '透明度：目前',
-        fullscreenMode: '全屏模式',
-        fullscreenFontSize: '全屏字体大小',
-        fullscreenFontSizeLabel: '全屏字体大小：目前',
-        fullscreenSliderLabel: '字体大小调节 (10%-85%)',
+        fullscreenMode: '全螢幕模式',
+        fullscreenFontSize: '全螢幕字体大小',
+        fullscreenFontSizeLabel: '全螢幕字体大小：目前',
+        fullscreenSliderLabel: '字体大小調节 (10%-85%)',
         customColor: '自定义顏色',
         transparent: '透明'
     },
@@ -386,21 +386,21 @@ window.translations = {
         hours: '小时',
         minutes: '分钟',
         seconds: '秒',
-        title: '計時器标题（可选）',
+        title: '計時器標题（可選）',
         titlePlaceholder: '例如：课堂演讲、考试時間等',
         setTime: '設置時間',
         setStartTime: '設置开始時間',
         fontSettings: '字体設置',
         fontSize: '字体大小',
         fontSizeLabel: '字体大小：目前',
-        adjustColor: '调整顏色',
+        adjustColor: '調整顏色',
         colorSettings: '顏色設置',
         textColor: '字体顏色',
         bgColor: '背景顏色',
         opacity: '透明度',
         opacityLabel: '透明度：目前',
-        fullscreenFontSize: '全屏字体大小',
-        fullscreenFontSizeLabel: '全屏字体大小：目前',
+        fullscreenFontSize: '全螢幕字体大小',
+        fullscreenFontSizeLabel: '全螢幕字体大小：目前',
         soundSettings: '声音設置',
         playSound: '倒計時结束时播放提示音',
         loopPlayback: '循环播放',
@@ -422,18 +422,18 @@ window.translations = {
             orange: '橙色',
             purple: '紫色',
             transparent: '透明',
-            darkGray: '深灰（默认）',
+            darkGray: '深灰（預設）',
             lightGray: '浅灰',
             lightRed: '浅红',
             lightBlue: '浅蓝',
             lightGreen: '浅绿',
             lightYellow: '浅黄',
             lightOrange: '浅橙',
-            whiteDefault: '白色（默认）'
+            whiteDefault: '白色（預設）'
         },
         customColor: '自定义顏色',
         start: '开始',
-        adjust: '调整',
+        adjust: '調整',
         continue: '继续',
         pause: '暂停',
         reset: '重置',
@@ -456,7 +456,7 @@ window.translations = {
         'dubai': '迪拜 (UTC+4)',
         'sydney': '悉尼 (UTC+10/+11)',
         'auckland': '奥克兰 (UTC+12/+13)',
-        'utc': 'UTC (协调世界时)'
+        'utc': 'UTC (协調世界时)'
     },
 
     // Welcome Dialog
@@ -465,12 +465,12 @@ window.translations = {
         content: `欢迎使用 Aboard 白板套用！
 
 使用提示：
-• 点击底部工具栏選擇不同工具进行绘画
+• 点击底部工具栏選擇不同工具進行绘画
 • 使用 Ctrl+Z 撤銷，Ctrl+Y 重做
-• 点击右上角縮放按钮或使用鼠标滚轮縮放畫布
+• 点击右上角縮放按钮或使用鼠標滚轮縮放畫布
 • 点击背景按钮可以選擇不同的背景圖案
 • 在設置中可以切换無限畫布或分頁模式
-• 支持触控和鼠标操作
+• 支持触控和鼠標操作
 
 祝您使用愉快！`,
         confirm: '确定',
