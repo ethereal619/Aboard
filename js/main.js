@@ -1480,6 +1480,24 @@ class DrawingBoard {
         paginationControls.classList.add('show');
     }
     
+    // Calculate the scale needed to fit canvas within viewport with margins
+    calculateCanvasFitScale() {
+        const width = this.settingsManager.canvasWidth;
+        const height = this.settingsManager.canvasHeight;
+        const viewportWidth = window.innerWidth;
+        const viewportHeight = window.innerHeight;
+        const margin = 40; // Margin around canvas in pixels
+        
+        // Available space for canvas (accounting for margins)
+        const availableWidth = viewportWidth - (2 * margin);
+        const availableHeight = viewportHeight - (2 * margin);
+        
+        // Calculate scale to fit canvas within available space
+        const scaleX = availableWidth / width;
+        const scaleY = availableHeight / height;
+        return Math.min(scaleX, scaleY, 1); // Don't scale up beyond 100%
+    }
+    
     applyCanvasSize() {
         // Always use pagination mode now
         const width = this.settingsManager.canvasWidth;
@@ -1503,19 +1521,8 @@ class DrawingBoard {
         this.bgCanvas.style.width = width + 'px';
         this.bgCanvas.style.height = height + 'px';
         
-        // Calculate scale to fit canvas within viewport with margin
-        const viewportWidth = window.innerWidth;
-        const viewportHeight = window.innerHeight;
-        const margin = 40; // Margin around canvas in pixels
-        
-        // Available space for canvas (accounting for margins)
-        const availableWidth = viewportWidth - (2 * margin);
-        const availableHeight = viewportHeight - (2 * margin);
-        
-        // Calculate scale to fit canvas within available space
-        const scaleX = availableWidth / width;
-        const scaleY = availableHeight / height;
-        const fitScale = Math.min(scaleX, scaleY, 1); // Don't scale up beyond 100%
+        // Calculate proper scale to fit canvas within viewport
+        const fitScale = this.calculateCanvasFitScale();
         
         // Apply the current zoom level on top of the fit scale
         const finalScale = fitScale * this.drawingEngine.canvasScale;
@@ -1578,20 +1585,7 @@ class DrawingBoard {
     
     applyZoom(updateConfigScale = true) {
         // Calculate proper scale to fit canvas within viewport
-        const width = this.settingsManager.canvasWidth;
-        const height = this.settingsManager.canvasHeight;
-        const viewportWidth = window.innerWidth;
-        const viewportHeight = window.innerHeight;
-        const margin = 40; // Margin around canvas in pixels
-        
-        // Available space for canvas (accounting for margins)
-        const availableWidth = viewportWidth - (2 * margin);
-        const availableHeight = viewportHeight - (2 * margin);
-        
-        // Calculate scale to fit canvas within available space
-        const scaleX = availableWidth / width;
-        const scaleY = availableHeight / height;
-        const fitScale = Math.min(scaleX, scaleY, 1); // Don't scale up beyond 100%
+        const fitScale = this.calculateCanvasFitScale();
         
         // Apply the current zoom level on top of the fit scale
         const finalScale = fitScale * this.drawingEngine.canvasScale;
@@ -1600,7 +1594,7 @@ class DrawingBoard {
         const panX = this.drawingEngine.panOffset.x;
         const panY = this.drawingEngine.panOffset.y;
         
-        // In paginated mode, keep centering and add pan
+        // Keep canvas centered and apply pan offset
         const transform = `translate(-50%, -50%) translate(${panX}px, ${panY}px) scale(${finalScale})`;
         this.canvas.style.transform = transform;
         this.bgCanvas.style.transform = transform;
