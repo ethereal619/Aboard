@@ -669,33 +669,71 @@ class DrawingBoard {
         
         const toolbarSizeSlider = document.getElementById('toolbar-size-slider');
         const toolbarSizeValue = document.getElementById('toolbar-size-value');
+        const toolbarSizeInput = document.getElementById('toolbar-size-input');
         toolbarSizeSlider.addEventListener('input', (e) => {
             this.settingsManager.toolbarSize = parseInt(e.target.value);
             toolbarSizeValue.textContent = e.target.value;
+            toolbarSizeInput.value = e.target.value;
+            this.settingsManager.updateToolbarSize();
+        });
+        toolbarSizeInput.addEventListener('input', (e) => {
+            const value = Math.max(40, Math.min(80, parseInt(e.target.value) || 40));
+            e.target.value = value;
+            toolbarSizeSlider.value = value;
+            this.settingsManager.toolbarSize = value;
+            toolbarSizeValue.textContent = value;
             this.settingsManager.updateToolbarSize();
         });
         
         const configScaleSlider = document.getElementById('config-scale-slider');
         const configScaleValue = document.getElementById('config-scale-value');
+        const configScaleInput = document.getElementById('config-scale-input');
         configScaleSlider.addEventListener('input', (e) => {
             this.settingsManager.configScale = parseInt(e.target.value) / 100;
             configScaleValue.textContent = Math.round(this.settingsManager.configScale * 100);
+            configScaleInput.value = e.target.value;
+            this.settingsManager.updateConfigScale();
+        });
+        configScaleInput.addEventListener('input', (e) => {
+            const value = Math.max(80, Math.min(120, parseInt(e.target.value) || 100));
+            e.target.value = value;
+            configScaleSlider.value = value;
+            this.settingsManager.configScale = value / 100;
+            configScaleValue.textContent = value;
             this.settingsManager.updateConfigScale();
         });
         
         // Background opacity and pattern intensity from settings
         const bgOpacitySlider = document.getElementById('bg-opacity-slider');
         const bgOpacityValue = document.getElementById('bg-opacity-value');
+        const bgOpacityInput = document.getElementById('bg-opacity-input');
         bgOpacitySlider.addEventListener('input', (e) => {
             this.backgroundManager.setOpacity(parseInt(e.target.value) / 100);
             bgOpacityValue.textContent = e.target.value;
+            bgOpacityInput.value = e.target.value;
+        });
+        bgOpacityInput.addEventListener('input', (e) => {
+            const value = Math.max(0, Math.min(100, parseInt(e.target.value) || 100));
+            e.target.value = value;
+            bgOpacitySlider.value = value;
+            this.backgroundManager.setOpacity(value / 100);
+            bgOpacityValue.textContent = value;
         });
         
         const patternIntensitySlider = document.getElementById('pattern-intensity-slider');
         const patternIntensityValue = document.getElementById('pattern-intensity-value');
+        const patternIntensityInput = document.getElementById('pattern-intensity-input');
         patternIntensitySlider.addEventListener('input', (e) => {
             this.backgroundManager.setPatternIntensity(parseInt(e.target.value) / 100);
             patternIntensityValue.textContent = e.target.value;
+            patternIntensityInput.value = e.target.value;
+        });
+        patternIntensityInput.addEventListener('input', (e) => {
+            const value = Math.max(10, Math.min(200, parseInt(e.target.value) || 50));
+            e.target.value = value;
+            patternIntensitySlider.value = value;
+            this.backgroundManager.setPatternIntensity(value / 100);
+            patternIntensityValue.textContent = value;
         });
         
         document.querySelectorAll('.position-option-btn').forEach(btn => {

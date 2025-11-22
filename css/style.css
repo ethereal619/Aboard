@@ -727,26 +727,26 @@ body {
 .settings-group.collapsible {
     border: 1px solid #e0e0e0;
     border-radius: 8px;
-    padding: 8px 12px;
+    padding: 6px 10px;
     background: #fafafa;
     min-height: auto; /* Compact when collapsed */
 }
 
-/* When expanded, use moderate padding to show content without excessive spacing */
+/* When expanded, use minimal padding to maximize content space */
 .settings-group.collapsible:not(.collapsed) {
-    padding: 12px 16px;
+    padding: 10px 12px;
     min-height: auto;
 }
 
 /* Settings groups with sliders need slightly more space */
 .settings-group.collapsible:not(.collapsed):has(.slider) {
-    padding: 14px 16px;
+    padding: 10px 12px;
     min-height: auto;
 }
 
 /* Collapsed state should be compact */
 .settings-group.collapsible.collapsed {
-    padding: 8px 12px;
+    padding: 6px 10px;
     min-height: auto;
 }
 

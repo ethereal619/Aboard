@@ -192,10 +192,12 @@ class SettingsManager {
     loadSettings() {
         document.getElementById('toolbar-size-slider').value = this.toolbarSize;
         document.getElementById('toolbar-size-value').textContent = this.toolbarSize;
+        document.getElementById('toolbar-size-input').value = this.toolbarSize;
         this.updateToolbarSize();
         
         document.getElementById('config-scale-slider').value = Math.round(this.configScale * 100);
         document.getElementById('config-scale-value').textContent = Math.round(this.configScale * 100);
+        document.getElementById('config-scale-input').value = Math.round(this.configScale * 100);
         this.updateConfigScale();
         
         this.setControlPosition(this.controlPosition);
